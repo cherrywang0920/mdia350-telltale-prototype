@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Making Telltale Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=Pinyon+Script&family=Chiron+Sung+HK:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* ---- Tokens (mirror the Figma variables) ---- */
+  :root {
+    --paper-0: #FCFAF6; --paper-50: #F4EEE7; --paper-200: #EAE1D6; --paper-300: #D9CEC0;
+    --ink-950: #23140E; --ink-800: #45302A; --ink-500: #6A5B50; --ink-300: #A8998A; --ink-100: #F2E9D8;
+    --red-600: #A92E1C; --red-400: #E2523A;
+    --color-bg-page: var(--paper-50); --color-bg-raised: var(--paper-200);
+    --color-text-primary: var(--ink-950); --color-text-muted: var(--ink-500);
+    --color-accent-red: var(--red-600); --color-border: var(--paper-300);
+    --color-print-frame: var(--paper-0); --color-print-back: var(--paper-200);
+    --font-sans: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-serif: "Newsreader", Georgia, serif;
+    --font-script: "Pinyon Script", cursive;
+    --font-zh: "Chiron Sung HK", "Songti TC", serif;
+    --gutter: 24px; --col-gap: 16px; --row-gap: 48px;
+    --flip: 700ms; --settle: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @media (min-width: 1024px) { :root { --gutter: 40px; --col-gap: 24px; --row-gap: 64px; } }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--ink-950); color: var(--ink-100); font-family: var(--font-serif); }
+  img { display: block; }
+
+  /* ---- 1. Opening: halftone dissolve (Ink) ---- */
+  .stage { position: relative; height: 400vh; }
+  .stage__sticky { position: sticky; top: 0; height: 100vh; overflow: hidden; }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .corner { position: absolute; top: 28px; left: var(--gutter); right: var(--gutter); display: flex; justify-content: space-between;
+    font: 800 11px/11px var(--font-sans); letter-spacing: .02em; text-transform: uppercase; color: var(--red-400); }
+  .corner span { white-space: pre-line; }
+  @media (max-width: 699px) { .corner span:nth-child(2), .corner span:nth-child(3) { display: none; } }
+  .zh, .sub { position: absolute; opacity: 0; }
+  .zh { font: 700 clamp(24px, 3.4vw, 52px)/1.2 var(--font-zh); color: var(--red-400); letter-spacing: .04em; -webkit-text-stroke: 6px #FCFAF6; paint-order: stroke fill; }
+  .sub { font: 800 11px/13px var(--font-sans); letter-spacing: .02em; text-transform: uppercase; color: var(--ink-100); white-space: pre-line; }
+  .credit { position: absolute; left: var(--gutter); bottom: 20px; margin: 0; font: 400 11px/16px var(--font-sans); color: var(--ink-300); }
+
+  /* ---- 2. Chapter (Paper) ---- */
+  .chapter { background: var(--color-bg-page) url(paper-tile.png) repeat; background-size: 512px; color: var(--color-text-primary);
+    padding: 80px var(--gutter) 120px; overflow: hidden; }
+  .grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); column-gap: var(--col-gap); row-gap: var(--row-gap); }
+  .grid > * { grid-column: 1 / -1; min-width: 0; }
+
+  .marker__row { display: flex; align-items: flex-end; gap: 8px; padding-top: 24px; }
+  .marker__num { font: 400 110px/90px var(--font-script); color: var(--color-accent-red); margin: 0; }
+  .marker__rule { flex: 1; height: 2px; background: var(--color-accent-red); margin-bottom: 10px; }
+  .marker h2 { font: 800 clamp(34px, 4.4vw, 48px)/1.2 var(--font-sans); letter-spacing: -.02em; margin: 16px 0 0; }
+
+  .reporting p { font-size: 20px; line-height: 32px; margin: 0; max-width: 680px; }
+  .reporting p + p { margin-top: 24px; }
+
+  .fact { border-left: 3px solid var(--color-accent-red); padding: 8px 0 8px 32px; }
+  .fact__fig { font: 800 clamp(34px, 4.4vw, 48px)/1.2 var(--font-sans); letter-spacing: -.02em; color: var(--color-accent-red); margin: 0 0 8px; }
+  .fact__text { font-size: 20px; line-height: 32px; margin: 0 0 8px; }
+  .fact__src { font: 400 11px/16px var(--font-sans); color: var(--color-text-muted); margin: 0; }
+
+  .placeholder { min-height: 240px; display: grid; place-content: center; justify-items: center; gap: 8px; text-align: center;
+    background: var(--color-bg-raised); border: 1.5px dashed var(--color-text-muted); padding: 24px; }
+  .tag { font: 700 11px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--color-text-muted); border: 1px solid currentColor; padding: 4px 10px; }
+  .placeholder p { font: 400 14px/20px var(--font-sans); margin: 0; }
+
+  /* Archive Image: hover = white print border, click = 3D flip */
+  .archive-image { margin: 0; }
+  .print { position: relative; aspect-ratio: var(--ratio, 3 / 2); perspective: 1600px; }
+  .print__toggle { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; background: transparent; border: 0; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .print__toggle:focus-visible { outline: none; }
+  .print__card { position: absolute; inset: 0; z-index: 2; pointer-events: none; transform-style: preserve-3d; transition: transform var(--flip) var(--settle); }
+  .print.is-flipped .print__card { transform: rotateY(180deg); }
+  .print__face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    box-shadow: 0 0 0 0 var(--color-print-frame); transition: box-shadow 200ms ease-out; }
+  .print__front { background: var(--paper-300); overflow: hidden; }
+  .print__front img { width: 100%; height: 100%; object-fit: contain; }
+  .print__back { transform: rotateY(180deg); background: var(--color-print-back); color: var(--ink-950);
+    display: flex; flex-direction: column; gap: 10px; padding: clamp(16px, 4.5%, 32px); overflow: hidden; }
+  .print__back-tag { font: 700 11px/14px var(--font-sans); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-500); margin: 0; }
+  .print__note { font: italic 400 clamp(14px, 1.6vw, 17px)/1.35 var(--font-serif); margin: 0; }
+  .print__foot { margin-top: auto; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .print__link { pointer-events: auto; font: 700 11px/14px var(--font-sans); letter-spacing: .06em; text-transform: uppercase; color: var(--red-600); text-decoration: none; }
+  .print__link:hover, .print__link:focus-visible { text-decoration: underline; }
+  .print__hint { font: 400 11px/16px var(--font-sans); color: var(--ink-500); }
+  .print:not(.is-flipped) .print__foot { visibility: hidden; }
+  .print.is-flipped .print__foot { transition: visibility 0s linear calc(var(--flip) / 2); }
+  @media (hover: hover) { .print:hover .print__face { box-shadow: 0 0 0 8px var(--color-print-frame), 0 14px 32px rgba(35,20,14,.2); } }
+  .print:focus-within .print__face, .print.is-flipped .print__face { box-shadow: 0 0 0 8px var(--color-print-frame), 0 14px 32px rgba(35,20,14,.2); }
+  .print__toggle:focus-visible ~ .print__card .print__face { outline: 2px solid var(--color-accent-red); outline-offset: 10px; }
+  .caption { margin-top: 16px; }
+  .caption__text { font: 400 14px/20px var(--font-sans); margin: 0 0 4px; }
+  .caption__credit { font: 400 11px/16px var(--font-sans); color: var(--color-text-muted); margin: 0; }
+
+  /* Source cards: the gateway */
+  .cards { display: grid; grid-template-columns: 1fr; gap: var(--col-gap); row-gap: 24px; }
+  .card { background: var(--color-bg-raised); padding: 24px; display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: inherit; }
+  .card__thumb { aspect-ratio: 3 / 2; background: var(--paper-300); display: grid; place-items: center; overflow: hidden; }
+  .card__thumb:has(img) { aspect-ratio: auto; background: none; } /* photo thumbs take the photo's own shape */
+  .card__thumb img { width: 100%; height: auto; }
+  .card__thumb span { font: 400 12px/16px var(--font-sans); color: var(--color-text-muted); }
+  .card__archive { font: 700 12px/18px var(--font-sans); letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-muted); margin: 8px 0 0; }
+  .card__item { font: 400 14px/20px var(--font-sans); margin: 0; }
+  .card__go { font: 700 11px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--color-accent-red); margin-top: auto; }
+  .card:hover .card__go, .card:focus-visible .card__go { text-decoration: underline; }
+  .card:focus-visible { outline: 2px solid var(--color-accent-red); outline-offset: 4px; }
+
+  .end-note { font: italic 400 14px/18px var(--font-serif); color: var(--color-text-muted); }
+  .end-note::before { content: "→ "; color: var(--color-accent-red); font-style: normal; }
+
+  /* ---- Desktop: asymmetric 12-column grid ---- */
+  @media (min-width: 1024px) {
+    .grid { grid-template-columns: repeat(12, 1fr); }
+    .marker    { grid-column: 1 / 9;  grid-row: 1; }
+    .reporting-a { grid-column: 1 / 7; grid-row: 2; }
+    .fact      { grid-column: 7 / 13; grid-row: 3; margin-top: -24px; }
+    .figure    { grid-column: 4 / 13; grid-row: 4; }
+    .reporting-b { grid-column: 1 / 7; grid-row: 5; align-self: start; }
+    .placeholder { grid-column: 7 / 13; grid-row: 5; }
+    .cards     { grid-column: 1 / -1; grid-row: 6; grid-template-columns: repeat(3, 1fr); align-items: start; }
+    .cards .card:nth-child(2) { margin-top: 80px; }
+    .cards .card:nth-child(3) { margin-top: 40px; }
+    .end-note  { grid-column: 1 / 7; grid-row: 7; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .print__card { transition: none; transform: none !important; }
+    .print__back { transform: none; opacity: 0; }
+    .print__face { transition: opacity 200ms linear; }
+    .print.is-flipped .print__back { opacity: 1; }
+    .print.is-flipped .print__front { opacity: 0; }
+    [data-speed] { transform: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 1. Opening -->
+<section class="stage" aria-label="Opening">
+  <div class="stage__sticky">
+    <canvas aria-hidden="true"></canvas>
+    <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Making Telltale</h1>
+    <div class="corner" aria-hidden="true"><span>From the
+archive</span><span>Three lost
+sites</span><span>Five years
+of research</span><span>One new
+medium</span></div>
+    <div class="zh" aria-hidden="true">【 還原與製作 】</div>
+    <div class="sub">Faith Moosang &amp; April Liu
+on turning archives into story</div>
+    <p class="credit">Chinese Detention Shed, Vancouver, 1890 · City of Vancouver Archives, CVA 153-2</p>
+  </div>
+</section>
+
+<!-- 2. Chapter 01 -->
+<main class="chapter">
+  <div class="grid">
+    <header class="marker">
+      <div class="marker__row"><p class="marker__num" aria-hidden="true">01</p><span class="marker__rule"></span></div>
+      <h2>Three sites that disappeared</h2>
+    </header>
+
+    <div class="reporting reporting-a">
+      <p>[Our reporting] Telltale grew out of five years of research for the Chung | Lind exhibitions: stories that would not fit on the gallery walls. Faith and April chose three sites that have since disappeared.</p>
+    </div>
+
+    <aside class="fact" data-speed="0.85">
+      <p class="fact__fig">1890–1914</p>
+      <p class="fact__text">The years Chinese arrivals in Vancouver were held for inspection in a CPR-owned shed at the foot of Burrard Street.</p>
+      <p class="fact__src">Source: UBC Library, The Head Tax</p>
+    </aside>
+
+    <figure class="archive-image figure">
+      <div class="print" data-print style="--ratio: 480 / 341">
+        <button class="print__toggle" type="button" aria-pressed="false" aria-controls="back-shed" aria-label="Turn the print over to read its notes"></button>
+        <div class="print__card">
+          <div class="print__face print__front">
+            <img src="detention-shed-cva-153-2.jpg" alt="A long two-storey wooden building with a gabled roof and three dormers, raised on wooden pilings over mudflats at the water’s edge.">
+          </div>
+          <div class="print__face print__back" id="back-shed" aria-hidden="true">
+            <p class="print__back-tag">Back of print · notes</p>
+            <p class="print__note">The CPR-owned shed where Chinese arrivals were held for inspection, 1890–1914.</p>
+            <p class="print__note">City of Vancouver Archives · CVA 153-2</p>
+            <p class="print__note">One of Telltale’s three sites. [Our reporting: paraphrase from the interview, credited to Faith.]</p>
+            <div class="print__foot"><a class="print__link" href="https://searcharchives.vancouver.ca/" target="_blank" rel="noopener" tabindex="-1">→ View in archive</a><span class="print__hint">Click to flip back</span></div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="caption">
+        <p class="caption__text">Chinese Detention Shed, foot of Burrard Street, Vancouver, 1890.</p>
+        <p class="caption__credit">City of Vancouver Archives · CVA 153-2 · Click the photo to turn it over</p>
+      </figcaption>
+    </figure>
+
+    <div class="reporting reporting-b">
+      <p>[Our reporting: paraphrase from the interview, credited to April.]</p>
+    </div>
+
+    <div class="placeholder">
+      <span class="tag">Good-to-have</span>
+      <p>Detention shed blueprint</p>
+    </div>
+
+    <div class="cards">
+      <a class="card" data-speed="0.9" href="https://searcharchives.vancouver.ca/" target="_blank" rel="noopener">
+        <div class="card__thumb"><img src="detention-shed-cva-153-2.jpg" width="480" height="341" alt=""></div>
+        <p class="card__archive">City of Vancouver Archives</p>
+        <p class="card__item">Chinese Detention Shed at Vancouver, 1890 · CVA 153-2</p>
+        <span class="card__go">→ Open source</span>
+      </a>
+      <a class="card" data-speed="1.1" href="https://cumberlandhistory.ca/asset/great-northern-railways-track-gang/" target="_blank" rel="noopener">
+        <div class="card__thumb"><img src="gn-track-gang-rbcm-d-07548.jpg" width="1200" height="664" alt=""></div>
+        <p class="card__archive">Royal BC Museum</p>
+        <p class="card__item">Great Northern Railway track gang, c. 1884 · D-07548 (long mis-captioned as CPR workers)</p>
+        <span class="card__go">→ Open source</span>
+      </a>
+      <a class="card" data-speed="1" href="https://gallery.library.ubc.ca/the-head-tax/" target="_blank" rel="noopener">
+        <div class="card__thumb"><span>UBC Library exhibition</span></div>
+        <p class="card__archive">UBC Library</p>
+        <p class="card__item">The Head Tax</p>
+        <span class="card__go">→ Open source</span>
+      </a>
+    </div>
+
+    <p class="end-note">Prototype of one chapter. Text marked [Our reporting] is placeholder copy until the narrative is final. Faith and April’s ideas are paraphrased and credited, never quoted.</p>
+  </div>
+</main>
+
+<script>
+/* ?chapter=1 skips the opening (used for report screenshots) */
+if (new URLSearchParams(location.search).get('chapter')) document.querySelector('.stage').style.display = 'none';
+
+/* ===== Opening dissolve ===== */
+(() => {
+  const canvas = document.querySelector('canvas');
+  const ctx = canvas.getContext('2d');
+  const stage = document.querySelector('.stage');
+  const zh = document.querySelector('.zh');
+  const sub = document.querySelector('.sub');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fixedP = new URLSearchParams(location.search).get('p'); // ?p=0..1 freezes progress (report screenshots)
+
+  const HEAVY = 'Making', SCRIPT = 'Telltale';
+  const CREAM = [242, 233, 216], RED = [226, 82, 58];
+  let W, H, dpr, particles = [], layout = {}, raf = 0, photo = {}, cover = {}, halftone = null;
+
+  const img = new Image();
+  img.src = 'detention-shed-cva-153-2.jpg';
+
+  const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+  const ease = (t) => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const rand = (() => { let s = 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+
+  function computeLayout() {
+    const heavyFs = Math.max(64, Math.min(176, W * 0.13));
+    ctx.font = `800 ${heavyFs}px "Bricolage Grotesque"`;
+    const heavyW = ctx.measureText(HEAVY).width;
+    const x = Math.max(24, (W - heavyW * 1.25) / 2);
+    const base = H * 0.52;
+    const scriptFs = heavyFs * 1.12;
+    return { heavyFs, heavyW, x, base, scriptFs, scriptX: x + heavyW * 0.42, scriptBase: base - heavyFs * 0.62, rot: -6 * Math.PI / 180 };
+  }
+
+  function drawTitle(c, L, { fill, stroke, strokeW }) {
+    c.save();
+    c.textBaseline = 'alphabetic';
+    c.lineJoin = 'round';
+    c.font = `800 ${L.heavyFs}px "Bricolage Grotesque"`;
+    if (stroke) { c.strokeStyle = stroke; c.lineWidth = strokeW; c.strokeText(HEAVY, L.x, L.base); }
+    c.fillStyle = fill; c.fillText(HEAVY, L.x, L.base);
+    c.translate(L.scriptX, L.scriptBase); c.rotate(L.rot);
+    c.font = `${L.scriptFs}px "Pinyon Script"`;
+    if (stroke) { c.lineWidth = strokeW * 0.8; c.strokeText(SCRIPT, 0, 0); }
+    c.fillText(SCRIPT, 0, 0);
+    c.restore();
+  }
+
+  function build() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = innerWidth; H = innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    layout = computeLayout();
+
+    // 1. The photo as a print (contain, never cropped) and its fine halftone
+    const step = Math.max(3, Math.round(Math.min(W, H) / 220));
+    const scale = Math.min((W * 0.8) / img.width, (H * 0.66) / img.height);
+    const iw = Math.round(img.width * scale), ih = Math.round(img.height * scale);
+    const ix = Math.round((W - iw) / 2), iy = Math.round((H - ih) / 2 + H * 0.03);
+    photo = { ix, iy, iw, ih };
+    const cs = Math.max(W / img.width, H / img.height); // full-bleed backdrop for the end state
+    cover = { w: img.width * cs, h: img.height * cs, x: (W - img.width * cs) / 2, y: (H - img.height * cs) / 2 };
+    const off = document.createElement('canvas'); off.width = iw; off.height = ih;
+    const oc = off.getContext('2d'); oc.drawImage(img, 0, 0, iw, ih);
+    const px = oc.getImageData(0, 0, iw, ih).data;
+    halftone = document.createElement('canvas'); halftone.width = W * dpr; halftone.height = H * dpr;
+    const hc = halftone.getContext('2d'); hc.setTransform(dpr, 0, 0, dpr, 0, 0); hc.fillStyle = 'rgb(242,233,216)';
+    const src = [];
+    for (let y = Math.floor(step / 2); y < ih; y += step) {
+      for (let x = Math.floor(step / 2); x < iw; x += step) {
+        const i = (y * iw + x) * 4;
+        const raw = (0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2]) / 255;
+        const lum = Math.pow(clamp((raw - 0.12) / 0.8), 1.25); // dot sizes only; the photo itself is untouched
+        if (lum < 0.03) continue;
+        const rad = step * 0.56 * Math.sqrt(lum);            // halftone: dot area follows brightness
+        hc.beginPath(); hc.arc(ix + x, iy + y, rad, 0, Math.PI * 2); hc.fill();
+        src.push({ sx: ix + x, sy: iy + y, lum, r0: rad * 1.7 });
+      }
+    }
+
+    // 2. Title shape as target points
+    const tOff = document.createElement('canvas'); tOff.width = W; tOff.height = H;
+    const tc = tOff.getContext('2d');
+    drawTitle(tc, layout, { fill: '#fff' });
+    const td = tc.getImageData(0, 0, W, H).data;
+    let tstep = Math.max(3, Math.round(step * 0.55)), targets;
+    do {
+      targets = [];
+      for (let y = 0; y < H; y += tstep) for (let x = 0; x < W; x += tstep) if (td[(y * W + x) * 4 + 3] > 128) targets.push({ tx: x, ty: y });
+      tstep++;
+    } while (targets.length > src.length && tstep < 20);
+
+    // 3. Pair them in x order so the motion flows left to right
+    src.sort((a, b) => a.sx - b.sx || a.sy - b.sy);
+    targets.sort((a, b) => a.tx - b.tx || a.ty - b.ty);
+    const M = targets.length, N = src.length;
+    particles = src.map((p, i) => {
+      const t = targets[Math.min(M - 1, Math.floor(i * M / N))];
+      const a = rand() * Math.PI * 2;
+      return { ...p, tx: t.tx + (rand() - .5) * tstep * .6, ty: t.ty + (rand() - .5) * tstep * .6,
+               r1: tstep * 0.62, d: (p.sx / W) * 0.4 + rand() * 0.08,
+               nx: Math.cos(a) * (60 + rand() * 120), ny: Math.sin(a) * (60 + rand() * 120) };
+    });
+
+    // DOM extras sit under the drawn title
+    if (W < 700) { // phone: stack the Chinese title and subtitle under the lockup
+      zh.style.left = layout.x + 'px';
+      zh.style.top = (layout.base + layout.heavyFs * 0.3) + 'px';
+      sub.style.left = (layout.x + 2) + 'px';
+      sub.style.top = (layout.base + layout.heavyFs * 0.3 + 48) + 'px';
+    } else {
+      zh.style.left = (layout.x + layout.heavyW * 0.5) + 'px';
+      zh.style.top = (layout.base + layout.heavyFs * 0.22) + 'px';
+      sub.style.left = (layout.x + 4) + 'px';
+      sub.style.top = (layout.base + layout.heavyFs * 0.36) + 'px';
+    }
+    render();
+  }
+
+  function progress() {
+    if (fixedP !== null) return clamp(parseFloat(fixedP));
+    if (reduce) return 1;
+    const r = stage.getBoundingClientRect();
+    return clamp(-r.top / (r.height - innerHeight));
+  }
+
+  function drawPrint(alpha) {
+    const { ix, iy, iw, ih } = photo, b = 8;
+    ctx.save(); ctx.globalAlpha = alpha;
+    ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 12;
+    ctx.fillStyle = 'rgb(252,250,246)'; ctx.fillRect(ix - b, iy - b, iw + 2 * b, ih + 2 * b); // slim white print border
+    ctx.shadowColor = 'transparent';
+    ctx.drawImage(img, ix, iy, iw, ih);
+    ctx.restore();
+  }
+
+  function drawBackdrop(alpha) {
+    ctx.save(); ctx.globalAlpha = alpha;
+    ctx.drawImage(img, cover.x, cover.y, cover.w, cover.h);
+    // ink wash so the cream-stroked title and the red labels stay readable
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, 'rgba(35,20,14,.9)'); g.addColorStop(.16, 'rgba(35,20,14,.62)'); g.addColorStop(.4, 'rgba(35,20,14,.42)');
+    g.addColorStop(.75, 'rgba(35,20,14,.55)'); g.addColorStop(1, 'rgba(35,20,14,.88)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
+
+  function render() {
+    raf = 0;
+    const p = progress();
+    ctx.clearRect(0, 0, W, H);
+    const toHalftone = clamp((p - 0.03) / 0.09);    // 0.03–0.12: print → halftone
+    const move = clamp((p - 0.13) / 0.67);          // 0.13–0.80: dots travel
+    const loose = clamp((p - 0.12) / 0.04);         // static halftone hands over to moving dots
+    const back = clamp((p - 0.80) / 0.12);          // 0.80–0.92: photo returns behind the title
+    const crisp = clamp((p - 0.84) / 0.10);         // 0.84–0.94: sharp title fades in
+
+    if (back > 0) drawBackdrop(back);
+    if (toHalftone < 1) drawPrint(1 - toHalftone);
+    if (toHalftone > 0 && loose < 1) { ctx.globalAlpha = toHalftone * (1 - loose); ctx.drawImage(halftone, 0, 0, W, H); ctx.globalAlpha = 1; }
+
+    if (loose > 0) {
+      const BUCKETS = 12, buckets = Array.from({ length: BUCKETS }, () => []);
+      for (const q of particles) {
+        const t = ease(clamp((move - q.d) / (1 - 0.48)));
+        const wob = Math.sin(Math.PI * t);
+        q.x = q.sx + (q.tx - q.sx) * t + q.nx * wob;
+        q.y = q.sy + (q.ty - q.sy) * t + q.ny * wob;
+        q.r = q.r0 + (q.r1 - q.r0) * t;
+        q.a = (0.55 + 0.45 * q.lum) * (1 - t) + t;
+        buckets[Math.min(BUCKETS - 1, Math.floor(t * BUCKETS))].push(q);
+      }
+      const fade = loose * (1 - crisp * 0.95);
+      buckets.forEach((list, k) => {
+        if (!list.length) return;
+        const m = k / (BUCKETS - 1);
+        const c = CREAM.map((v, i) => Math.round(v + (RED[i] - v) * m));
+        ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`;
+        for (const q of list) { ctx.globalAlpha = q.a * fade; ctx.fillRect(q.x - q.r / 2, q.y - q.r / 2, q.r, q.r); }
+      });
+      ctx.globalAlpha = 1;
+    }
+    if (crisp > 0) {
+      ctx.globalAlpha = crisp;
+      drawTitle(ctx, layout, { fill: 'rgb(226,82,58)', stroke: 'rgb(252,250,246)', strokeW: layout.heavyFs * 0.075 });
+      ctx.globalAlpha = 1;
+    }
+    const extras = clamp((p - 0.88) / 0.10);
+    zh.style.opacity = extras; sub.style.opacity = extras;
+  }
+
+  const request = () => { if (!raf) raf = requestAnimationFrame(render); };
+  Promise.all([
+    img.decode(),
+    document.fonts.load('800 100px "Bricolage Grotesque"'),
+    document.fonts.load('100px "Pinyon Script"'),
+  ]).then(() => {
+    build();
+    addEventListener('scroll', request, { passive: true });
+    addEventListener('resize', () => build());
+    document.documentElement.dataset.ready = '1';
+  });
+})();
+
+/* ===== Archive Image flip ===== */
+document.querySelectorAll('[data-print]').forEach((print) => {
+  const toggle = print.querySelector('.print__toggle'), back = print.querySelector('.print__back'), link = print.querySelector('.print__link'), hint = print.querySelector('.print__hint');
+  if (matchMedia('(hover: none)').matches) hint.textContent = 'Tap to flip back';
+  const set = (f) => {
+    print.classList.toggle('is-flipped', f);
+    toggle.setAttribute('aria-pressed', String(f));
+    toggle.setAttribute('aria-label', f ? 'Turn the print back to the photograph' : 'Turn the print over to read its notes');
+    back.setAttribute('aria-hidden', String(!f)); link.tabIndex = f ? 0 : -1;
+  };
+  toggle.addEventListener('click', () => set(!print.classList.contains('is-flipped')));
+  print.addEventListener('keydown', (e) => { if (e.key === 'Escape' && print.classList.contains('is-flipped')) { set(false); toggle.focus(); } });
+});
+
+/* ===== Parallax (desktop only, off with reduced motion) ===== */
+(() => {
+  const els = [...document.querySelectorAll('[data-speed]')];
+  const desk = matchMedia('(min-width: 1024px)'), calm = matchMedia('(prefers-reduced-motion: reduce)');
+  const still = !!new URLSearchParams(location.search).get('chapter');
+  let raf = 0;
+  const tick = () => {
+    raf = 0;
+    for (const el of els) {
+      if (!desk.matches || calm.matches || still) { el.style.transform = ''; continue; }
+      const r = el.getBoundingClientRect();
+      const off = (r.top + r.height / 2 - innerHeight / 2) * (1 - parseFloat(el.dataset.speed));
+      el.style.transform = `translate3d(0, ${off.toFixed(1)}px, 0)`;
+    }
+  };
+  const req = () => { if (!raf) raf = requestAnimationFrame(tick); };
+  addEventListener('scroll', req, { passive: true }); addEventListener('resize', req); tick();
+})();
+
+/* Each print takes its photo's own proportions, so the frame fits the image (no bars) */
+document.querySelectorAll('[data-print]').forEach((print) => {
+  const im = print.querySelector('.print__front img'); if (!im) return;
+  const fit = () => { if (im.naturalWidth) print.style.setProperty('--ratio', `${im.naturalWidth} / ${im.naturalHeight}`); };
+  im.complete ? fit() : im.addEventListener('load', fit);
+});
+</script>
+</body>
+</html>
