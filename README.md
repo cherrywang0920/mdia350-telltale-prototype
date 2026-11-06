@@ -1,4 +1,4 @@
-# Making Telltale: prototype
+# Reviving Lost History: prototype
 
 Coded prototype for a MDIA 350 (UBC, Fall 2026) scrollytelling piece about how Faith Moosang and April Liu make *Telltale*.
 

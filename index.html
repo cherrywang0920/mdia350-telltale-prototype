@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Making Telltale Prototype</title>
+<title>Reviving Lost History Prototype</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=Pinyon+Script&family=Chiron+Sung+HK:wght@400;700&display=swap" rel="stylesheet">
@@ -142,7 +142,7 @@
 <section class="stage" aria-label="Opening">
   <div class="stage__sticky">
     <canvas aria-hidden="true"></canvas>
-    <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Making Telltale</h1>
+    <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Reviving Lost History</h1>
     <div class="corner" aria-hidden="true"><span>From the
 archive</span><span>Three lost
 sites</span><span>Five years
@@ -243,7 +243,7 @@ if (new URLSearchParams(location.search).get('chapter')) document.querySelector(
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const fixedP = new URLSearchParams(location.search).get('p'); // ?p=0..1 freezes progress (report screenshots)
 
-  const HEAVY = 'Making', SCRIPT = 'Telltale';
+  const HEAVY = 'Lost History', SCRIPT = 'Reviving';
   const CREAM = [242, 233, 216], RED = [226, 82, 58];
   let W, H, dpr, particles = [], layout = {}, raf = 0, photo = {}, cover = {}, halftone = null;
 
@@ -255,13 +255,18 @@ if (new URLSearchParams(location.search).get('chapter')) document.querySelector(
   const rand = (() => { let s = 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
 
   function computeLayout() {
-    const heavyFs = Math.max(64, Math.min(176, W * 0.13));
-    ctx.font = `800 ${heavyFs}px "Bricolage Grotesque"`;
-    const heavyW = ctx.measureText(HEAVY).width;
-    const x = Math.max(24, (W - heavyW * 1.25) / 2);
-    const base = H * 0.52;
-    const scriptFs = heavyFs * 1.12;
-    return { heavyFs, heavyW, x, base, scriptFs, scriptX: x + heavyW * 0.42, scriptBase: base - heavyFs * 0.62, rot: -6 * Math.PI / 180 };
+    const phone = W < 700;
+    const lines = phone ? ['Lost', 'History'] : [HEAVY];   // phone: stack the heavy words so they stay large
+    ctx.font = '800 100px "Bricolage Grotesque"';
+    const per = Math.max(...lines.map((l) => ctx.measureText(l).width)) / 100;
+    const heavyFs = Math.min(176, (W * (phone ? 0.84 : 0.72)) / per);
+    const heavyW = per * heavyFs, lh = heavyFs * 0.9;
+    const x = Math.max(24, (W - heavyW) / 2);
+    const base = H * (phone ? 0.56 : 0.54);                // baseline of the last heavy line
+    const top = base - lh * (lines.length - 1);           // baseline of the first heavy line
+    const scriptFs = heavyFs * (phone ? 0.86 : 1.12);
+    return { phone, lines, lh, heavyFs, heavyW, x, base, top, scriptFs,
+             scriptX: x - heavyFs * 0.06, scriptBase: top - heavyFs * 0.62, rot: -6 * Math.PI / 180 };
   }
 
   function drawTitle(c, L, { fill, stroke, strokeW }) {
@@ -269,8 +274,11 @@ if (new URLSearchParams(location.search).get('chapter')) document.querySelector(
     c.textBaseline = 'alphabetic';
     c.lineJoin = 'round';
     c.font = `800 ${L.heavyFs}px "Bricolage Grotesque"`;
-    if (stroke) { c.strokeStyle = stroke; c.lineWidth = strokeW; c.strokeText(HEAVY, L.x, L.base); }
-    c.fillStyle = fill; c.fillText(HEAVY, L.x, L.base);
+    L.lines.forEach((line, i) => {
+      const y = L.top + i * L.lh;
+      if (stroke) { c.strokeStyle = stroke; c.lineWidth = strokeW; c.strokeText(line, L.x, y); }
+      c.fillStyle = fill; c.fillText(line, L.x, y);
+    });
     c.translate(L.scriptX, L.scriptBase); c.rotate(L.rot);
     c.font = `${L.scriptFs}px "Pinyon Script"`;
     if (stroke) { c.lineWidth = strokeW * 0.8; c.strokeText(SCRIPT, 0, 0); }
@@ -342,7 +350,7 @@ if (new URLSearchParams(location.search).get('chapter')) document.querySelector(
       sub.style.left = (layout.x + 2) + 'px';
       sub.style.top = (layout.base + layout.heavyFs * 0.3 + 48) + 'px';
     } else {
-      zh.style.left = (layout.x + layout.heavyW * 0.5) + 'px';
+      zh.style.left = (layout.x + layout.heavyW - zh.offsetWidth) + 'px'; // right edge of the heavy words
       zh.style.top = (layout.base + layout.heavyFs * 0.22) + 'px';
       sub.style.left = (layout.x + 4) + 'px';
       sub.style.top = (layout.base + layout.heavyFs * 0.36) + 'px';
@@ -427,6 +435,7 @@ if (new URLSearchParams(location.search).get('chapter')) document.querySelector(
     img.decode(),
     document.fonts.load('800 100px "Bricolage Grotesque"'),
     document.fonts.load('100px "Pinyon Script"'),
+    document.fonts.load('700 30px "Chiron Sung HK"'),
   ]).then(() => {
     build();
     addEventListener('scroll', request, { passive: true });
