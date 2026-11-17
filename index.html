@@ -198,6 +198,32 @@
     .today__text[hidden], .today__credit[hidden] { display: none; }
   }
 
+
+
+
+  /* Sound: one toggle for the whole piece. Ambient everywhere, site sounds crossfade in at A and C */
+  .sound-toggle { position: fixed; right: var(--gutter); bottom: 20px; z-index: 50; display: inline-flex; align-items: center; gap: 8px; border: 0; cursor: pointer;
+    background: var(--paper-0); color: var(--ink-950); font: 800 11px/14px var(--font-sans); letter-spacing: .06em; text-transform: uppercase; padding: 9px 12px;
+    box-shadow: 0 4px 14px rgba(35,20,14,.25); }
+  .sound-toggle:hover { background: var(--paper-200); }
+  .sound-toggle:focus-visible { outline: 2px solid var(--color-accent-red); outline-offset: 3px; }
+  .sound-toggle[aria-pressed="true"] { background: var(--red-600); color: var(--paper-0); }
+  .sound-toggle svg { width: 16px; height: 16px; }
+  .sound-toggle[aria-pressed="false"] .sound__wave { opacity: .3; }
+  .sound-toggle__bars { display: none; gap: 2px; align-items: flex-end; height: 11px; }
+  .sound-toggle__bars i { width: 3px; height: 4px; background: currentColor; }
+  .sound-toggle[aria-pressed="true"] .sound-toggle__bars { display: inline-flex; }
+  .sound-toggle[aria-pressed="true"] .sound-toggle__bars i { animation: sound-bar 900ms ease-in-out infinite alternate; }
+  .sound-toggle__bars i:nth-child(2) { animation-delay: -300ms !important; }
+  .sound-toggle__bars i:nth-child(3) { animation-delay: -600ms !important; }
+  @keyframes sound-bar { from { height: 3px; } to { height: 11px; } }
+  .sound-note { font: 400 11px/16px var(--font-sans); color: var(--color-text-muted); margin: 4px 0 0; max-width: 52ch; }
+  .sound-note span { color: var(--color-accent-red); margin-right: 4px; }
+  @media (prefers-reduced-motion: reduce) { .sound-toggle[aria-pressed="true"] .sound-toggle__bars i { animation: none; height: 8px; } }
+
+  .subhead { font: 800 clamp(22px, 2.4vw, 28px)/1.2 var(--font-sans); letter-spacing: -.01em; margin: 16px 0 -28px; }
+  .reporting.play { margin-top: 24px; }
+
   /* Text chips: the three boat words, one at a time */
   .chips { display: flex; flex-wrap: wrap; gap: 12px; align-content: flex-start; }
   .chip { font: 800 clamp(28px, 4vw, 44px)/1 var(--font-sans); letter-spacing: -.01em; text-transform: uppercase; background: var(--ink-950); color: var(--paper-50);
@@ -258,6 +284,13 @@
 </style>
 </head>
 <body>
+<button class="sound-toggle" type="button" aria-pressed="false" aria-label="Turn sound on">
+  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7.5h3.2L11 3.8v12.4L6.2 12.5H3z" fill="currentColor"/><path class="sound__wave" d="M13.6 7.2a4 4 0 0 1 0 5.6M15.8 5a7 7 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+  <span class="sound-toggle__label">Sound off</span><span class="sound-toggle__bars" aria-hidden="true"><i></i><i></i><i></i></span>
+</button>
+<audio data-track="ambient" src="media/sound-ambient-park.mp3" preload="none" loop></audio>
+<audio data-track="site-railway" src="media/sound-railway-cables.mp3" preload="none" loop></audio>
+<audio data-track="site-saltery" src="media/sound-water-waves.m4a" preload="none" loop></audio>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="paper-tint" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0.995 0 0 0 0  0 0.971 0 0 0  0 0 0.946 0 0  0 0 0 1 0"/></filter></svg>
 
@@ -289,7 +322,7 @@ on turning archives into story</div>
   <section class="grid ch" aria-labelledby="ch1">
     <header class="marker c-marker">
       <div class="marker__row"><p class="marker__num" aria-hidden="true">01</p><span class="marker__rule"></span></div>
-      <h2 id="ch1">Stories that did not fit</h2>
+      <h2 id="ch1">Telltale’s Inspiration</h2>
     </header>
     <div class="reporting c-left"><p>The extensive research that Liu and Moosang did for the Chung exhibition, a previous project of a permanent exhibit displayed at the UBC library, planted the seeds for the making of <cite>Telltale</cite>. Five years of research had uncovered so many important stories to the early Chinese Canadian experience that couldn’t all fit into one exhibit. Many floor plans, photographs, documents, archival material stayed unpublished and wouldn’t have been known by the general public. Feeling compelled to get these stories out there, Liu and Moosang began reconstructing these lost sites in virtual reality.</p></div>
     <aside class="annotation c-right" data-speed="0.9"><p class="annotation__label">From the narrative</p><p class="annotation__text">Five years of research for the Chung exhibition. Floor plans, photographs and documents that were never published.</p></aside>
@@ -300,7 +333,7 @@ on turning archives into story</div>
       <div class="sites__intro">
         <header class="marker">
           <div class="marker__row"><p class="marker__num" aria-hidden="true">02</p><span class="marker__rule"></span></div>
-          <h2 id="ch2">Three sites that disappeared</h2>
+          <h2 id="ch2">Playing the game</h2>
         </header>
         <div class="reporting"><p>The game features three sites: the Galiano Saltery, the Detention Shed and the railway encampment.</p>
           <div class="ph-tags"><span class="ph-tag"><b>Must-have</b> Background on the three sites (narrative)</span></div></div>
@@ -371,7 +404,7 @@ on turning archives into story</div>
           </figure>
         </div>
         <div class="thumbs" role="group" aria-label="More photos from this site"><button class="thumb" type="button" aria-pressed="true" data-show="rail-1" aria-label="Show: Chinese Canadian life on the railway."><img src="media/railway-life-tc2.jpg" alt=""></button><button class="thumb" type="button" aria-pressed="false" data-show="rail-2" aria-label="Show: Canadian Pacific Railway Chinese labourers’ camp, Kamloops, 1886."><img src="media/railway-camp-kamloops-1886.jpg" alt=""></button><button class="thumb" type="button" aria-pressed="false" data-show="rail-3" aria-label="Show: Great Northern Railway track gang, c. 1884."><img src="gn-track-gang-rbcm-d-07548.jpg" alt=""></button><span class="thumbs__count">3 photos</span></div>
-        <div class="ph-tags"><span class="ph-tag"><b>Good-to-have</b> Ambient railway sound, subject to approval</span></div>
+        <p class="sound-note"><span aria-hidden="true">♪</span> In this section you hear “the sound of the old railway cables front” by CRAFTCREST.com, Freesound, CC BY 4.0. Turn sound on at the bottom right.</p>
       <figure class="today today--inline">
           <img src="media/today-kamloops.jpg" width="960" height="447" loading="lazy" alt="Downtown Kamloops seen from a hillside, with a rail line running between the buildings and the river.">
           <figcaption><span class="today__label">Today</span> Kamloops is now a city, and the rail line still runs through downtown along the river. <a class="today__credit" href="https://commons.wikimedia.org/wiki/File:Downtown-Kamloops-Skyline.jpg" target="_blank" rel="noopener">Photo: Acmacaulay, 2017 · CC BY-SA 4.0</a></figcaption>
@@ -464,6 +497,7 @@ on turning archives into story</div>
         </div>
         <div class="thumbs" role="group" aria-label="More photos from this site"><button class="thumb" type="button" aria-pressed="true" data-show="gal-1" aria-label="Show: Early post office and dock, Sturdies Bay, Galiano Island, c. 1920s."><img src="media/galiano-sturdies-bay-1920s.jpg" alt=""></button><button class="thumb" type="button" aria-pressed="false" data-show="gal-2" aria-label="Show: A house at Whaler Bay, Galiano Island."><img src="media/galiano-whaler-bay-house.jpg" alt=""></button><span class="thumbs__count">2 photos</span></div>
         <div class="ph-tags"><span class="ph-tag"><b>Must-have</b> A photo of the saltery itself</span></div>
+      <p class="sound-note"><span aria-hidden="true">♪</span> In this section you hear “Soft ocean waves sounds” by kapilkant, Freesound, CC0.</p>
       <figure class="today today--inline">
           <img src="media/today-sturdies-bay.jpg" width="960" height="720" loading="lazy" alt="A long wooden dock leading to the ferry ramp at Sturdies Bay, with forested hills behind.">
           <figcaption><span class="today__label">Today</span> Sturdies Bay, the bay in Ellen’s 1920s postcard, is now the island’s BC Ferries terminal. <a class="today__credit" href="https://commons.wikimedia.org/wiki/File:Sturdies_Bay_Ferry_Terminal_(7743624182).jpg" target="_blank" rel="noopener">Photo: David Stanley, 2012 · CC BY 2.0</a></figcaption>
@@ -471,25 +505,20 @@ on turning archives into story</div>
       </article>
       </div>
     </div>
+  
+    <div class="reporting c-left play"><p>The player encounters these sites through the first-person perspective of a Chinese Canadian character of their choosing. They make decisions that determine the outcome of the character’s life, whether they thrive, get deported, make it rich, survive or die. Progressing through the journey, they collect archival material that are digital recreations of archives that Liu and Moosang had uncovered through their research.</p><p>You start off in the Hong Kong Harbour where you decide on which boat to embark to get to Canada. Each boat has a word rooted in emotion: love, duty, adventure…</p></div>
+    <div class="chips c-right" aria-label="The boat words">
+      <span class="chip">Love</span><span class="chip chip--red">Duty</span><span class="chip">Adventure</span>
+    </div>
   </section>
 
   <section class="grid ch" aria-labelledby="ch3">
     <header class="marker c-marker">
       <div class="marker__row"><p class="marker__num" aria-hidden="true">03</p><span class="marker__rule"></span></div>
-      <h2 id="ch3">Choosing a boat</h2>
+      <h2 id="ch3">Process</h2>
     </header>
-    <div class="reporting c-left"><p>The player encounters these sites through the first-person perspective of a Chinese Canadian character of their choosing and they make decisions that determine the outcome of the character’s life, whether they thrive, get deported, make it rich, survive or die. Progressing through the journey, they collect archival material that are digital recreations of archives that Liu and Moosang had uncovered through their research.</p><p>You start off in the Hong Kong Harbour where you decide on which boat to embark to get to Canada. Each boat has a word rooted in emotion: love, duty, adventure.</p><p class="gap">[Sophia: confirm the boat words]</p></div>
-    <div class="chips c-right" aria-label="The three boat words">
-      <span class="chip">Love</span><span class="chip chip--red">Duty</span><span class="chip">Adventure</span>
-    </div>
-  </section>
-
-  <section class="grid ch" aria-labelledby="ch4">
-    <header class="marker c-marker">
-      <div class="marker__row"><p class="marker__num" aria-hidden="true">04</p><span class="marker__rule"></span></div>
-      <h2 id="ch4">Piecing fragments together</h2>
-    </header>
-    <div class="reporting c-left"><p>The goal with <cite>Telltale</cite> was to make an immersive and interactive game to resonate with its audience and the substantial research that backs up the narrative makes it feel concrete.</p><p>Liu describes the process of making <cite>Telltale</cite> as piecing fragments together. They gather as many of these fragments as they can through speaking with professors and archeologists and reaching out to organizations to learn as much as possible about these spaces. Simple accounts of the space become valuable information to them: the strong smell of fish, the windows letting in air flow and light.</p></div>
+    <h3 class="subhead c-left">Piecing it together</h3>
+    <div class="reporting c-left"><p><cite>Telltale</cite> aims to deliver an immersive narrative and the substantial research that backs up the narrative of the game makes it feel concrete.</p><p>Liu describes the process of making <cite>Telltale</cite> as piecing fragments together. They gather as many of these fragments as they can through speaking with professors and archeologists and reaching out to organizations to learn as much as possible about these spaces. Simple accounts of the space become valuable information to them: the strong smell of fish, the windows letting in air flow and light.</p></div>
   </section>
 
   <section class="drift" aria-label="Archival fragments">
@@ -513,27 +542,34 @@ on turning archives into story</div>
     </div>
   </section>
 
-  <section class="grid ch" aria-label="Piecing fragments together, continued">
-    <div class="reporting c-left"><p>Liu and Moosang are meticulous about researching even the small details so that the narrative has a strong basis of actual events. One of the characters meets with Dr. Sun Yat-sen and Liu and Moosang researched where he was during the time of the story and adjusted the narrative to fit. Every aspect of the narrative is accounted for and researched to be as accurate as possible such as how long the boat journey takes from Coal Harbour to Galiano.</p><p>While so much research had been collected to piece together these stories, there are still many gaps of information lost to history. Liu and Moosang fictionalize some aspects to mitigate some of these gaps. As experts in these spaces through years of research, they are able to fill in the gaps through extrapolating and connecting the pieces together in a plausible manner.</p></div>
+  <section class="grid ch" aria-label="Process, continued">
+    <h3 class="subhead c-left">The small details</h3>
+    <div class="reporting c-left"><p>Liu and Moosang are meticulous about researching even the small details for the narrative to have a strong basis of actual events. In <cite>Telltale</cite>, one of the characters meets with Dr. Sun Yat-sen and Liu and Moosang researched where he was during the time of the story and adjusted the narrative to fit. Every aspect of the narrative is accounted for and researched to be as accurate as possible such as how long the boat journey takes from Coal Harbour to Galiano.</p></div>
+    <h3 class="subhead c-left">Filling in the gaps</h3>
+    <div class="reporting c-left"><p>While so much research had been collected to piece together these stories, there are still many gaps of information lost to history. Liu and Moosang fictionalize some aspects to mitigate some of these gaps. As experts in these spaces through years of research, they are able to fill in the gaps through extrapolating and connecting the pieces together in a plausible manner.</p></div>
+    <h3 class="subhead c-left"><cite>Telltale</cite>’s storytelling style</h3>
+    <div class="reporting c-left"><p>Some of these gaps are intentionally left open for the audience to fill in through their own imagination. Liu and Moosang employ a dreamlike, poetic aesthetic that places emotion at the heart of the narrative and allows for ambiguity. Some things, they choose not to show, leaving the audience simply looking at the suggestion of something there.</p></div>
+    <h3 class="subhead c-left">How we understand history</h3>
+    <div class="reporting c-left"><p>They tie choice back to how we understand history. There is no complete, objective history that exists; we all see little fragments and different sections that come nowhere close to allowing us to understand the entire scope of it. Yet, we fill in the gaps and come up with our own interpretation of history.</p></div>
+    <h3 class="subhead c-left">What’s important stays factual</h3>
+    <div class="reporting c-left"><p>While the lines between fiction and history are blurred through this game, there are elements that Liu and Moosang strictly ensured would not be fiction. Language, dialogue, historical events and clothing had to be specific to the time period, so with the social relations and hierarchies between people. Together, these details establish the cultural and historical context in which the narrative unfolds.</p></div>
     <aside class="annotation c-right" data-speed="0.9"><p class="annotation__label">Never fiction</p><p class="annotation__text">Language · dialogue · historical events · clothing · social relations and hierarchies</p></aside>
-    <div class="reporting c-left"><p>Some of these gaps are intentionally left open for the audience to fill in through their own imagination. Liu and Moosang employ a dreamlike, poetic aesthetic that places emotion at the heart of the narrative and allows for ambiguity. Some things, they choose not to show, leaving the audience simply looking at the suggestion of something there.</p><p>They tie choice back to how we understand history. There is no complete, objective history that exists; we all see little fragments and different sections that come nowhere close to allowing us to understand the entire scope of it. Yet, we fill in the gaps and come up with our own interpretation of history.</p><p>The lines between fiction and history are blurred through this game, although there are elements that Liu and Moosang strictly ensured would not be fiction. Language, dialogue, historical events and clothing had to be specific to the time period, so with the social relations and hierarchies between people. Together, these details establish the cultural and historical context in which the narrative unfolds.</p></div>
   </section>
 
-  <section class="grid ch" aria-labelledby="ch5">
+  <section class="grid ch" aria-labelledby="ch4">
     <header class="marker c-marker">
-      <div class="marker__row"><p class="marker__num" aria-hidden="true">05</p><span class="marker__rule"></span></div>
-      <h2 id="ch5">Walking in their shoes</h2>
+      <div class="marker__row"><p class="marker__num" aria-hidden="true">04</p><span class="marker__rule"></span></div>
+      <h2 id="ch4">Format</h2>
     </header>
+    <h3 class="subhead c-left">Revitalizing historical records</h3>
     <div class="reporting c-left"><p>Historical recounts are often dry. It reduces people into flat characters and fails to capture what makes them people: motivations, emotions, relationships, fears. Through a VR world, the first-person lens it’s viewed through, and agency in the narrative, the player get to walk in these people’s shoes and learn about the experience of early Chinese Canadians through empathy.</p><p>The player feels the exclusion from society and the Canadian government blocking their friends, family and people from coming in. They feel the sentiments directly and make decisions that align with the motivations of many of the Chinese Canadians at this time: fighting to keep their business running and struggling to support their family.</p></div>
     <div class="placeholder c-right"><span class="tag">Good-to-have</span><p>Footage from Telltale, only with Faith and April’s permission</p></div>
-  </section>
-
-  <section class="grid ch" aria-labelledby="ch6">
-    <header class="marker c-marker">
-      <div class="marker__row"><p class="marker__num" aria-hidden="true">06</p><span class="marker__rule"></span></div>
-      <h2 id="ch6">What archives can do</h2>
-    </header>
-    <div class="reporting c-left"><p>Through this project, Liu and Moosang aim to show what archives can do. They tie real archives to the story and give them emotional weight, they allow the audience to learn more about these archives at the end of the story. Knowing that these materials each have a story and people had emotional connections with them, as well as the viewer empathizing with that firsthand, Liu and Moosang hope it would allow <cite>Telltale</cite> to be a gateway to learning more about archives and the stories behind them.</p><p><cite>Telltale</cite> pushes technology to its limits, exploring what can and can’t be done. Liu and Moosang believe in the potential for <cite>Telltale</cite>’s format to be used as a model for archives and educational organizations, museums, cultural groups, and communities trying to keep their histories alive. With many of these histories</p><p class="gap">[Sophia: sentence continues]</p></div>
+    <h3 class="subhead c-left">Emotional connection to archives</h3>
+    <div class="reporting c-left"><p>Through this project, Liu and Moosang aim to show what archives can do. They tie real archives to the story and give them emotional weight, they allow the audience to learn more about these archives at the end of the story. Knowing that these materials each have a story and people had emotional connections with them, as well as the viewer empathizing with that firsthand, Liu and Moosang hope it would allow <cite>Telltale</cite> to be a gateway to learning more about archives and the stories behind them.</p></div>
+    <h3 class="subhead c-left">Bringing history to life</h3>
+    <div class="reporting c-left"><p><cite>Telltale</cite> pushes technology to its limits, exploring what can and can’t be done. Liu and Moosang believe in the potential for <cite>Telltale</cite>’s format to be used as a model for archives and educational organizations, museums, cultural groups, and communities trying to keep their histories alive. Many of these histories are dying because they have been marginalized and are incredibly fragmented and Liu and Moosang’s solution is to let the audience personally live it out. <cite>Telltale</cite> meets the audience where they’re at simply by putting a character in their hands and giving them a sense of what it was like to be them.</p></div>
+    <h3 class="subhead c-left">A personal connection to history</h3>
+    <div class="reporting c-left"><p>Liu and Moosang hope to evoke in the audience a deep, personal connection to these histories. They have poured so much passion and care in creating <cite>Telltale</cite> and they hope that the audience would feel even a fraction of their excitement, curiosity and wonder when making these discoveries.</p></div>
     <p class="cards__label c-full">Where these images come from</p>
     <div class="cards c-full">
       
@@ -580,7 +616,7 @@ on turning archives into story</div>
       </a>
     </div>
 
-    <p class="end-note c-left">Narrative: Sophia (draft). Media: Ellen. Design and code: Cherry. Chapter names are working titles. Lines in [brackets] mark gaps still to fill. Faith and April’s ideas are paraphrased and credited, never quoted.</p>
+    <p class="end-note c-left">Narrative: Sophia. Media: Ellen. Design and code: Cherry. Sounds from Freesound: “gu_zhong_gong_yuan_3” by rasfrecci_w_donna (CC0), “the sound of the old railway cables front” by CRAFTCREST.com (CC BY 4.0), “Soft ocean waves sounds” by kapilkant (CC0). Faith and April’s ideas are paraphrased and credited, never quoted.</p>
   </section>
 </main>
 
@@ -870,6 +906,43 @@ document.querySelectorAll('.step').forEach((step) => {
     thumbs.forEach((x) => x.setAttribute('aria-pressed', String(x === t)));
   }));
 });
+
+/* ===== Sound: ambient through the whole piece; site A and C crossfade to their own sound ===== */
+(() => {
+  const btn = document.querySelector('.sound-toggle'); if (!btn) return;
+  const label = btn.querySelector('.sound-toggle__label');
+  const tracks = Object.fromEntries([...document.querySelectorAll('audio[data-track]')].map((a) => [a.dataset.track, a]));
+  const LEVEL = { ambient: 0.45, 'site-railway': 0.6, 'site-saltery': 0.6 };
+  let on = false, zone = null, raf = 0;
+  const target = (name) => (!on ? 0 : name === (tracks[zone] ? zone : 'ambient') ? LEVEL[name] : 0);
+  const tick = () => {
+    raf = 0; let moving = false;
+    for (const [name, a] of Object.entries(tracks)) {
+      const t = target(name);
+      if (t > 0 && a.paused) { a.volume = 0; a.play().catch(() => {}); }
+      let v = a.volume + (t - a.volume) * 0.05;          // slow crossfade, about 1.5 s
+      if (Math.abs(t - v) < 0.005) v = t; else moving = true;
+      a.volume = v;
+      if (v === 0 && !a.paused) a.pause();
+    }
+    if (moving) raf = requestAnimationFrame(tick);
+  };
+  const go = () => { if (!raf) raf = requestAnimationFrame(tick); };
+  btn.addEventListener('click', () => {
+    on = !on;
+    btn.setAttribute('aria-pressed', String(on));
+    btn.setAttribute('aria-label', on ? 'Turn sound off' : 'Turn sound on');
+    label.textContent = on ? 'Sound on' : 'Sound off';
+    go();
+  });
+  // which site (if any) is in the middle of the screen
+  const inMid = new Set();
+  const io = new IntersectionObserver((es) => {
+    es.forEach((e) => (e.isIntersecting ? inMid.add(e.target.id) : inMid.delete(e.target.id)));
+    zone = [...inMid].pop() || null; go();
+  }, { rootMargin: '-45% 0px -45% 0px' });
+  document.querySelectorAll('.step').forEach((s) => io.observe(s));
+})();
 
 /* ===== Text chips: the boat words appear one at a time ===== */
 (() => {
