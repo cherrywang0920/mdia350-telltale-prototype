@@ -12,7 +12,7 @@ Coded prototype for a MDIA 350 (UBC, Fall 2026) scrollytelling piece about how F
 - Six chapters.
 - A sticky map for the three sites, with a "Today" photo for each.
 - Archive prints that flip over.
-- A sound toggle: ambient sound throughout, with site sounds for the railway and the saltery.
+- Sound on by default (a spinning vinyl at the bottom right turns it off): ambient sound throughout, with site sounds for the railway and the saltery.
 
 ## Images
 

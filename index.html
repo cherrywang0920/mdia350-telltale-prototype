@@ -201,25 +201,20 @@
 
 
 
-  /* Sound: one toggle for the whole piece. Ambient everywhere, site sounds crossfade in at A and C */
-  .sound-toggle { position: fixed; right: var(--gutter); bottom: 20px; z-index: 50; display: inline-flex; align-items: center; gap: 8px; border: 0; cursor: pointer;
-    background: var(--paper-0); color: var(--ink-950); font: 800 11px/14px var(--font-sans); letter-spacing: .06em; text-transform: uppercase; padding: 9px 12px;
-    box-shadow: 0 4px 14px rgba(35,20,14,.25); }
-  .sound-toggle:hover { background: var(--paper-200); }
-  .sound-toggle:focus-visible { outline: 2px solid var(--color-accent-red); outline-offset: 3px; }
-  .sound-toggle[aria-pressed="true"] { background: var(--red-600); color: var(--paper-0); }
-  .sound-toggle svg { width: 16px; height: 16px; }
-  .sound-toggle[aria-pressed="false"] .sound__wave { opacity: .3; }
-  .sound-toggle__bars { display: none; gap: 2px; align-items: flex-end; height: 11px; }
-  .sound-toggle__bars i { width: 3px; height: 4px; background: currentColor; }
-  .sound-toggle[aria-pressed="true"] .sound-toggle__bars { display: inline-flex; }
-  .sound-toggle[aria-pressed="true"] .sound-toggle__bars i { animation: sound-bar 900ms ease-in-out infinite alternate; }
-  .sound-toggle__bars i:nth-child(2) { animation-delay: -300ms !important; }
-  .sound-toggle__bars i:nth-child(3) { animation-delay: -600ms !important; }
-  @keyframes sound-bar { from { height: 3px; } to { height: 11px; } }
-  .sound-note { font: 400 11px/16px var(--font-sans); color: var(--color-text-muted); margin: 4px 0 0; max-width: 52ch; }
-  .sound-note span { color: var(--color-accent-red); margin-right: 4px; }
-  @media (prefers-reduced-motion: reduce) { .sound-toggle[aria-pressed="true"] .sound-toggle__bars i { animation: none; height: 8px; } }
+  /* Sound: a vinyl record. Spins while sound plays; crossed out when off. On by default */
+  .vinyl-wrap { position: fixed; right: var(--gutter); bottom: 18px; z-index: 50; display: flex; align-items: center; gap: 10px; }
+  .vinyl { width: 52px; height: 52px; padding: 2px; border: 0; border-radius: 50%; cursor: pointer; background: var(--paper-0); box-shadow: 0 4px 14px rgba(35,20,14,.3); }
+  .vinyl svg { width: 100%; height: 100%; display: block; }
+  .vinyl:focus-visible { outline: 2px solid var(--color-accent-red); outline-offset: 3px; }
+  .vinyl__disc { transform-origin: 24px 24px; transform-box: view-box; }
+  .vinyl.is-spinning .vinyl__disc { animation: vinyl-spin 3.2s linear infinite; }
+  @keyframes vinyl-spin { to { transform: rotate(360deg); } }
+  .vinyl__cross { opacity: 0; transition: opacity 200ms; }
+  .vinyl[aria-pressed="false"] .vinyl__cross { opacity: 1; }
+  .vinyl[aria-pressed="false"] .vinyl__disc { opacity: .55; }
+  .vinyl-hint { font: 700 11px/14px var(--font-sans); letter-spacing: .04em; text-transform: uppercase; color: var(--ink-950); background: var(--paper-0); padding: 6px 10px; box-shadow: 0 2px 8px rgba(35,20,14,.2); }
+  .vinyl-hint[hidden] { display: none; }
+  @media (prefers-reduced-motion: reduce) { .vinyl.is-spinning .vinyl__disc { animation: none; } }
 
   .subhead { font: 800 clamp(22px, 2.4vw, 28px)/1.2 var(--font-sans); letter-spacing: -.01em; margin: 16px 0 -28px; }
   .reporting.play { margin-top: 24px; }
@@ -284,10 +279,26 @@
 </style>
 </head>
 <body>
-<button class="sound-toggle" type="button" aria-pressed="false" aria-label="Turn sound on">
-  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7.5h3.2L11 3.8v12.4L6.2 12.5H3z" fill="currentColor"/><path class="sound__wave" d="M13.6 7.2a4 4 0 0 1 0 5.6M15.8 5a7 7 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-  <span class="sound-toggle__label">Sound off</span><span class="sound-toggle__bars" aria-hidden="true"><i></i><i></i><i></i></span>
-</button>
+<div class="vinyl-wrap">
+  <span class="vinyl-hint" hidden>Click anywhere for sound</span>
+  <button class="vinyl" type="button" aria-pressed="true" aria-label="Sound is on. Turn sound off" title="Sound on">
+    <svg viewBox="0 0 48 48" aria-hidden="true">
+      <g class="vinyl__disc">
+        <circle cx="24" cy="24" r="21" fill="#23140E"/>
+        <circle cx="24" cy="24" r="18" fill="none" stroke="#45302A" stroke-width=".8"/>
+        <circle cx="24" cy="24" r="15.5" fill="none" stroke="#45302A" stroke-width=".8"/>
+        <circle cx="24" cy="24" r="13" fill="none" stroke="#45302A" stroke-width=".8"/>
+        <path d="M10.5 15.5 A16 16 0 0 1 20 9.2" fill="none" stroke="#A8998A" stroke-width="1.4" stroke-linecap="round" opacity=".7"/>
+        <circle cx="24" cy="24" r="8" fill="#A92E1C"/>
+        <circle cx="24" cy="24" r="6.4" fill="none" stroke="#F4EEE7" stroke-width=".5" opacity=".6"/>
+        <circle cx="27.5" cy="21" r="1" fill="#F4EEE7" opacity=".8"/>
+        <circle cx="24" cy="24" r="1.6" fill="#F4EEE7"/>
+      </g>
+      <line class="vinyl__cross" x1="8" y1="40" x2="40" y2="8" stroke="#F4EEE7" stroke-width="6" stroke-linecap="round"/>
+      <line class="vinyl__cross" x1="8" y1="40" x2="40" y2="8" stroke="#A92E1C" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+  </button>
+</div>
 <audio data-track="ambient" src="media/sound-ambient-park.mp3" preload="none" loop></audio>
 <audio data-track="site-railway" src="media/sound-railway-cables.mp3" preload="none" loop></audio>
 <audio data-track="site-saltery" src="media/sound-water-waves.m4a" preload="none" loop></audio>
@@ -404,7 +415,7 @@ on turning archives into story</div>
           </figure>
         </div>
         <div class="thumbs" role="group" aria-label="More photos from this site"><button class="thumb" type="button" aria-pressed="true" data-show="rail-1" aria-label="Show: Chinese Canadian life on the railway."><img src="media/railway-life-tc2.jpg" alt=""></button><button class="thumb" type="button" aria-pressed="false" data-show="rail-2" aria-label="Show: Canadian Pacific Railway Chinese labourers’ camp, Kamloops, 1886."><img src="media/railway-camp-kamloops-1886.jpg" alt=""></button><button class="thumb" type="button" aria-pressed="false" data-show="rail-3" aria-label="Show: Great Northern Railway track gang, c. 1884."><img src="gn-track-gang-rbcm-d-07548.jpg" alt=""></button><span class="thumbs__count">3 photos</span></div>
-        <p class="sound-note"><span aria-hidden="true">♪</span> In this section you hear “the sound of the old railway cables front” by CRAFTCREST.com, Freesound, CC BY 4.0. Turn sound on at the bottom right.</p>
+        <p class="sound-note"><span aria-hidden="true">♪</span> In this section you hear “the sound of the old railway cables front” by CRAFTCREST.com, Freesound, CC BY 4.0. Use the record at the bottom right to turn sound off.</p>
       <figure class="today today--inline">
           <img src="media/today-kamloops.jpg" width="960" height="447" loading="lazy" alt="Downtown Kamloops seen from a hillside, with a rail line running between the buildings and the river.">
           <figcaption><span class="today__label">Today</span> Kamloops is now a city, and the rail line still runs through downtown along the river. <a class="today__credit" href="https://commons.wikimedia.org/wiki/File:Downtown-Kamloops-Skyline.jpg" target="_blank" rel="noopener">Photo: Acmacaulay, 2017 · CC BY-SA 4.0</a></figcaption>
@@ -907,41 +918,59 @@ document.querySelectorAll('.step').forEach((step) => {
   }));
 });
 
-/* ===== Sound: ambient through the whole piece; site A and C crossfade to their own sound ===== */
+/* ===== Sound: on by default. Ambient through the piece; sites A and C crossfade to their own sound.
+   Browsers only allow sound after the reader's first click, tap or key press, so until then it waits. ===== */
 (() => {
-  const btn = document.querySelector('.sound-toggle'); if (!btn) return;
-  const label = btn.querySelector('.sound-toggle__label');
+  const btn = document.querySelector('.vinyl'); if (!btn) return;
+  const hint = document.querySelector('.vinyl-hint');
   const tracks = Object.fromEntries([...document.querySelectorAll('audio[data-track]')].map((a) => [a.dataset.track, a]));
   const LEVEL = { ambient: 0.45, 'site-railway': 0.6, 'site-saltery': 0.6 };
-  let on = false, zone = null, raf = 0;
+  let on = true, blocked = false, zone = null, raf = 0;
   const target = (name) => (!on ? 0 : name === (tracks[zone] ? zone : 'ambient') ? LEVEL[name] : 0);
+  const playing = () => Object.values(tracks).some((a) => !a.paused);
+  const refresh = () => {
+    btn.classList.toggle('is-spinning', on && playing());
+    if (hint) hint.hidden = !(on && blocked);
+  };
   const tick = () => {
     raf = 0; let moving = false;
     for (const [name, a] of Object.entries(tracks)) {
       const t = target(name);
-      if (t > 0 && a.paused) { a.volume = 0; a.play().catch(() => {}); }
-      let v = a.volume + (t - a.volume) * 0.05;          // slow crossfade, about 1.5 s
+      if (t > 0 && a.paused && !blocked) {
+        a.volume = 0;
+        a.play().then(refresh, () => { blocked = true; refresh(); });
+      }
+      let v = a.volume + (t - a.volume) * 0.05;            // about 1.5 s crossfade
       if (Math.abs(t - v) < 0.005) v = t; else moving = true;
       a.volume = v;
       if (v === 0 && !a.paused) a.pause();
     }
+    refresh();
     if (moving) raf = requestAnimationFrame(tick);
   };
   const go = () => { if (!raf) raf = requestAnimationFrame(tick); };
+  Object.values(tracks).forEach((a) => { a.addEventListener('playing', refresh); a.addEventListener('pause', refresh); });
+
+  // the first click, tap or key press anywhere lets the sound start
+  const unlock = () => { if (!blocked) return; blocked = false; go(); };
+  ['pointerdown', 'keydown', 'touchend'].forEach((ev) => document.addEventListener(ev, unlock, { capture: true }));
+
   btn.addEventListener('click', () => {
+    if (on && blocked) { unlock(); return; }             // first press on the record starts it rather than turning it off
     on = !on;
     btn.setAttribute('aria-pressed', String(on));
-    btn.setAttribute('aria-label', on ? 'Turn sound off' : 'Turn sound on');
-    label.textContent = on ? 'Sound on' : 'Sound off';
+    btn.setAttribute('aria-label', on ? 'Sound is on. Turn sound off' : 'Sound is off. Turn sound on');
+    btn.title = on ? 'Sound on' : 'Sound off';
     go();
   });
-  // which site (if any) is in the middle of the screen
+
   const inMid = new Set();
   const io = new IntersectionObserver((es) => {
     es.forEach((e) => (e.isIntersecting ? inMid.add(e.target.id) : inMid.delete(e.target.id)));
     zone = [...inMid].pop() || null; go();
   }, { rootMargin: '-45% 0px -45% 0px' });
-  document.querySelectorAll('.step').forEach((s) => io.observe(s));
+  document.querySelectorAll('.step').forEach((st) => io.observe(st));
+  go();                                                   // try straight away; most browsers will wait for a click
 })();
 
 /* ===== Text chips: the boat words appear one at a time ===== */
