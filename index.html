@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=Pinyon+Script&family=Chiron+Sung+HK:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   /* ---- Tokens (mirror the Figma variables) ---- */
   :root {
@@ -28,11 +30,11 @@
   @media (min-width: 1024px) { :root { --gutter: 40px; --col-gap: 24px; --row-gap: 64px; } }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
-  body { background: var(--ink-950); color: var(--ink-100); font-family: var(--font-serif); }
+  body { background: var(--paper-50); color: var(--ink-100); font-family: var(--font-serif); }
   img { display: block; }
 
   /* ---- 1. Opening: halftone dissolve (Ink) ---- */
-  .stage { position: relative; height: 400vh; }
+  .stage { position: relative; height: 400vh; background: var(--ink-950); }
   .stage__sticky { position: sticky; top: 0; height: 100vh; overflow: hidden; }
   .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   .corner { position: absolute; top: 28px; left: var(--gutter); right: var(--gutter); display: flex; justify-content: space-between;
@@ -46,7 +48,7 @@
 
   /* ---- 2. Chapter (Paper) ---- */
   .chapter { background: var(--color-bg-page) url(paper-tile.png) repeat; background-size: 512px; color: var(--color-text-primary);
-    padding: 80px var(--gutter) 120px; overflow: hidden; }
+    padding: 80px var(--gutter) 120px; overflow: clip; } /* clip, not hidden, so sticky still works inside */
   .grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); column-gap: var(--col-gap); row-gap: var(--row-gap); }
   .grid > * { grid-column: 1 / -1; min-width: 0; }
 
@@ -112,19 +114,136 @@
   .end-note { font: italic 400 14px/18px var(--font-serif); color: var(--color-text-muted); }
   .end-note::before { content: "→ "; color: var(--color-accent-red); font-style: normal; }
 
+  /* ---- Story sections ---- */
+  .ch + .ch, .drift + .ch { margin-top: 120px; }
+  .lede { font: 400 clamp(26px, 3.2vw, 36px)/1.3 var(--font-serif); margin: 0; max-width: 820px; }
+  .reporting cite { font-style: italic; }
+  .reporting .gap, .gap { font: 400 14px/20px var(--font-sans); color: var(--color-accent-red); margin-top: 12px; }
+  .annotation { border-top: 2px solid var(--color-accent-red); padding-top: 12px; max-width: 420px; }
+  .annotation__label { font: 800 11px/14px var(--font-sans); letter-spacing: .06em; text-transform: uppercase; color: var(--color-accent-red); margin: 0 0 8px; }
+  .annotation__text { font: 400 16px/24px var(--font-sans); margin: 0; }
+
+  /* Site marker: Ellen's line drawings + site name */
+  .site { display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap; border-bottom: 1.5px solid var(--color-text-primary); padding: 48px 0 12px; }
+  .site__icons { display: flex; gap: 12px; align-items: flex-end; }
+  .site__icons img { height: 72px; width: auto; }
+  @media (min-width: 1024px) { .site__icons img { height: 96px; } .site__icons { gap: 24px; } }
+  .site h3 { font: 800 clamp(24px, 3vw, 32px)/1.15 var(--font-sans); letter-spacing: -.01em; margin: 0; }
+  .site h3 span { display: block; font: 700 11px/16px var(--font-sans); letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-muted); margin-top: 4px; }
+  .print__link--none { color: var(--ink-500); }
+
+
+  /* Three sites: steps scroll past a sticky live map */
+  .sites { position: relative; margin-top: 16px; }
+  .sites__intro .reporting { margin-top: 32px; }
+  .sites__map { position: sticky; top: 0; z-index: 5; height: 40vh; margin: 24px calc(var(--gutter) * -1) 0; background: var(--color-bg-page) url(paper-tile.png) repeat; background-size: 512px; }
+  /* the map is printed on the page: tiles multiply into the paper, edges fade out */
+  .map { position: absolute; inset: 0 0 28px 0; background: var(--color-bg-page) url(paper-tile.png) repeat; background-size: 512px;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent), linear-gradient(to bottom, transparent, #000 12%, #000 86%, transparent);
+    -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent), linear-gradient(to bottom, transparent, #000 12%, #000 86%, transparent); mask-composite: intersect; }
+  .map__note { position: absolute; left: 12px; right: 12px; bottom: 6px; margin: 0; font: 400 11px/16px var(--font-sans); color: var(--color-text-muted); }
+  .map__now { font-weight: 800; color: var(--color-accent-red); text-transform: uppercase; letter-spacing: .06em; }
+  .map__fallback { font: 400 14px/20px var(--font-sans); padding: 24px; margin: 0; }
+  .step { padding: 40px 0 56px; display: flex; flex-direction: column; gap: 14px; }
+  .step .site { padding: 0 0 10px; }
+  .site h3 .site__num { display: inline; font: inherit; letter-spacing: inherit; text-transform: none; color: var(--color-accent-red); margin: 0 4px 0 0; }
+  .step__where { font: 400 13px/18px var(--font-sans); color: var(--color-text-muted); margin: 0; }
+  .step__where span { color: var(--color-accent-red); }
+  .fact--compact { padding: 4px 0 4px 20px; }
+  .fact--compact .fact__fig { font-size: 32px; margin-bottom: 4px; }
+  .fact--compact .fact__text { font-size: 17px; line-height: 26px; }
+  .gallery__item[hidden] { display: none; }
+  .thumbs { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .thumb { padding: 0; border: 0; background: none; cursor: pointer; opacity: .55; transition: opacity 150ms; }
+  .thumb img { display: block; height: 52px; width: auto; }
+  .thumb[aria-pressed="true"] { opacity: 1; box-shadow: 0 0 0 2px var(--color-accent-red); }
+  .thumb:hover { opacity: 1; }
+  .thumb:focus-visible { outline: 2px solid var(--color-accent-red); outline-offset: 3px; }
+  .thumbs__count { font: 400 11px/16px var(--font-sans); color: var(--color-text-muted); margin-left: 4px; }
+  .ph-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .ph-tag { font: 400 12px/16px var(--font-sans); border: 1.5px dashed var(--color-text-muted); padding: 6px 10px; background: var(--color-bg-raised); }
+  .ph-tag b { font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 10px; margin-right: 6px; color: var(--color-text-muted); }
+  .pin { position: relative; display: block; }
+  .pin__dot { position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; border-radius: 50%; background: var(--paper-0); border: 3px solid var(--ink-950); box-sizing: border-box; transition: transform 300ms var(--settle), background 300ms; }
+  .pin__label { position: absolute; left: 12px; top: -10px; white-space: nowrap; font: 800 11px/14px var(--font-sans); letter-spacing: .04em; text-transform: uppercase; color: var(--ink-950); background: var(--paper-0); padding: 3px 6px; box-shadow: 0 1px 2px rgba(35,20,14,.25); }
+  .pin.is-active .pin__dot { background: var(--red-600); border-color: var(--paper-0); transform: scale(1.4); box-shadow: 0 0 0 3px var(--red-600); }
+  .pin.is-active .pin__label { background: var(--red-600); color: var(--paper-0); }
+  .leaflet-container { background: transparent; font-family: var(--font-sans); }
+  /* tiles are tinted so white land becomes exactly the paper colour and water a darker tan */
+  .leaflet-tile-pane, .leaflet-overlay-pane img { filter: grayscale(1) brightness(.8) contrast(1.8) url(#paper-tint); }
+  .leaflet-control-attribution { font-size: 9px; background: transparent !important; color: var(--ink-500); }
+  .leaflet-control-attribution a { color: var(--ink-500); }
+  .leaflet-bar { border: 0 !important; box-shadow: none !important; }
+  .leaflet-bar a { background: var(--paper-0); color: var(--ink-950); border-bottom-color: var(--paper-300); }
+  .sites__map .leaflet-top { top: 18%; } .sites__map .leaflet-left { left: 12%; } .sites__map .leaflet-bottom { bottom: 10%; } .sites__map .leaflet-right { right: 12%; }
+
+
+  /* "Today": what each site is now, under the map */
+  .today { margin: 0; }
+  .today img { display: block; width: 100%; height: auto; }
+  .today__label { font: 800 10px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--paper-0); background: var(--ink-950); padding: 2px 6px; margin-right: 6px; }
+  .today__credit { display: block; font: 400 10px/14px var(--font-sans); color: var(--color-text-muted); text-decoration: none; margin-top: 4px; }
+  .today__credit:hover { text-decoration: underline; }
+  .today--inline { display: grid; grid-template-columns: 112px 1fr; gap: 12px; align-items: start; margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--paper-300); }
+  .today--inline figcaption { font: 400 13px/19px var(--font-sans); }
+  .today--panel { display: none; }
+  @media (min-width: 1024px) {
+    .today--inline { display: none; }
+    .sites__map .map { inset: 0 0 150px 0; }
+    .today--panel { display: grid; grid-template-columns: 168px 1fr; gap: 16px; align-items: end; position: absolute; left: 12%; right: 12%; bottom: 8px; min-height: 112px; }
+    .today--panel .today__img { width: 168px; height: 112px; object-fit: cover; }
+    .today--panel .today__img[hidden] { display: block; visibility: hidden; }
+    .today--panel .map__note { position: static; margin: 0 0 6px; }
+    .today__text { font: 400 14px/20px var(--font-sans); margin: 0; }
+    .today__text[hidden], .today__credit[hidden] { display: none; }
+  }
+
+  /* Text chips: the three boat words, one at a time */
+  .chips { display: flex; flex-wrap: wrap; gap: 12px; align-content: flex-start; }
+  .chip { font: 800 clamp(28px, 4vw, 44px)/1 var(--font-sans); letter-spacing: -.01em; text-transform: uppercase; background: var(--ink-950); color: var(--paper-50);
+    padding: 12px 18px 14px; opacity: 0; transform: translateY(16px); transition: opacity 500ms var(--settle), transform 500ms var(--settle); }
+  .chip--red { background: var(--red-600); }
+  .chips.is-in .chip { opacity: 1; transform: none; }
+  .chips.is-in .chip:nth-child(2) { transition-delay: 350ms; }
+  .chips.is-in .chip:nth-child(3) { transition-delay: 700ms; }
+
+  /* Fragments drift: photos move at different speeds around a pinned headline (desktop) */
+  .drift { margin: 120px calc(var(--gutter) * -1) 0; padding: 0 var(--gutter); }
+  .drift__head { font: 800 clamp(30px, 4.4vw, 56px)/1.1 var(--font-sans); letter-spacing: -.02em; max-width: 12ch; margin: 0 auto 32px; text-align: center; }
+  .drift__field { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 1200px; margin: 0 auto; }
+  .drift__item { margin: 0; }
+  .drift__item img { width: 100%; height: auto; display: block; }
+  .drift__item figcaption { font: 400 11px/16px var(--font-sans); color: var(--color-text-muted); margin-top: 6px; }
+
+  .cards__label { font: 800 11px/14px var(--font-sans); letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-muted); margin: 0; }
+
   /* ---- Desktop: asymmetric 12-column grid ---- */
   @media (min-width: 1024px) {
     .grid { grid-template-columns: repeat(12, 1fr); }
-    .marker    { grid-column: 1 / 9;  grid-row: 1; }
-    .reporting-a { grid-column: 1 / 7; grid-row: 2; }
-    .fact      { grid-column: 7 / 13; grid-row: 3; margin-top: -24px; }
-    .figure    { grid-column: 4 / 13; grid-row: 4; }
-    .reporting-b { grid-column: 1 / 7; grid-row: 5; align-self: start; }
-    .placeholder { grid-column: 7 / 13; grid-row: 5; }
-    .cards     { grid-column: 1 / -1; grid-row: 6; grid-template-columns: repeat(3, 1fr); align-items: start; }
-    .cards .card:nth-child(2) { margin-top: 80px; }
-    .cards .card:nth-child(3) { margin-top: 40px; }
-    .end-note  { grid-column: 1 / 7; grid-row: 7; }
+    .c-marker { grid-column: 1 / 9; }
+    .c-lede   { grid-column: 1 / 10; }
+    .c-left   { grid-column: 1 / 7; align-self: start; }
+    .c-right  { grid-column: 7 / 13; align-self: start; }
+    .c-wide   { grid-column: 4 / 13; }
+    .c-mid    { grid-column: 5 / 12; }
+    .c-full   { grid-column: 1 / -1; }
+    .fact.c-right { margin-top: -24px; }
+    .chips.c-right { padding-top: 8px; }
+    .cards { grid-template-columns: repeat(3, 1fr); align-items: start; }
+    .cards .card:nth-child(3n+2) { margin-top: 80px; }
+    .cards .card:nth-child(3n) { margin-top: 40px; }
+    .cards__label { margin-bottom: -32px; }
+    .sites { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: var(--col-gap); }
+    .sites__intro { grid-column: 1 / 7; grid-row: 1; }
+    .sites__steps { grid-column: 1 / 7; grid-row: 2; }
+    .sites__map { grid-column: 7 / 13; grid-row: 1 / span 2; top: 6vh; height: 88vh; margin: 0 calc(var(--gutter) * -1) 0 48px; background: none; align-self: start; }
+    .map__note { left: 12%; right: 12%; }
+    .step { min-height: 90vh; padding: 12vh 0; opacity: .3; transition: opacity 400ms; }
+    .step.is-active { opacity: 1; }
+    .drift { position: relative; height: 150vh; }
+    .drift__head { position: sticky; top: 42vh; z-index: 2; margin-bottom: 0; }
+    .drift__field { position: absolute; inset: 0 var(--gutter); display: block; max-width: none; }
+    .drift__item { position: absolute; left: var(--x); top: calc(var(--y) * 0.85 + 14vh); width: var(--w); }
   }
   @media (prefers-reduced-motion: reduce) {
     .print__card { transition: none; transform: none !important; }
@@ -133,10 +252,14 @@
     .print.is-flipped .print__back { opacity: 1; }
     .print.is-flipped .print__front { opacity: 0; }
     [data-speed] { transform: none !important; }
+    .chip { opacity: 1; transform: none; transition: none; }
+    .step { opacity: 1 !important; transition: none; }
   }
 </style>
 </head>
 <body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="paper-tint" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0.995 0 0 0 0  0 0.971 0 0 0  0 0 0.946 0 0  0 0 0 1 0"/></filter></svg>
 
 <!-- 1. Opening -->
 <section class="stage" aria-label="Opening">
@@ -155,78 +278,310 @@ on turning archives into story</div>
   </div>
 </section>
 
-<!-- 2. Chapter 01 -->
+<!-- 2. The story: Sophia's narrative (draft), Ellen's media, Cherry's components -->
 <main class="chapter">
-  <div class="grid">
-    <header class="marker">
+
+  <section class="grid ch" aria-label="Introduction">
+    <p class="lede c-lede">Artists and researchers April Liu and Faith Moosang are in the process of developing a game that brings to life dying histories of Chinese Canadians.</p>
+    <div class="reporting c-left"><p>The interactive storytelling game, <cite>Telltale</cite>, combines 3D virtual reality spaces with a choose-your-own-adventure format where players get to make choices for their character that reflect the experiences and moral dilemmas of early Chinese Canadians. <cite>Telltale</cite> recreates three disappeared sites that held integral histories worth remembering.</p></div>
+  </section>
+
+  <section class="grid ch" aria-labelledby="ch1">
+    <header class="marker c-marker">
       <div class="marker__row"><p class="marker__num" aria-hidden="true">01</p><span class="marker__rule"></span></div>
-      <h2>Three sites that disappeared</h2>
+      <h2 id="ch1">Stories that did not fit</h2>
     </header>
+    <div class="reporting c-left"><p>The extensive research that Liu and Moosang did for the Chung exhibition, a previous project of a permanent exhibit displayed at the UBC library, planted the seeds for the making of <cite>Telltale</cite>. Five years of research had uncovered so many important stories to the early Chinese Canadian experience that couldn’t all fit into one exhibit. Many floor plans, photographs, documents, archival material stayed unpublished and wouldn’t have been known by the general public. Feeling compelled to get these stories out there, Liu and Moosang began reconstructing these lost sites in virtual reality.</p></div>
+    <aside class="annotation c-right" data-speed="0.9"><p class="annotation__label">From the narrative</p><p class="annotation__text">Five years of research for the Chung exhibition. Floor plans, photographs and documents that were never published.</p></aside>
+  </section>
 
-    <div class="reporting reporting-a">
-      <p>[Our reporting] Telltale grew out of five years of research for the Chung | Lind exhibitions: stories that would not fit on the gallery walls. Faith and April chose three sites that have since disappeared.</p>
-    </div>
-
-    <aside class="fact" data-speed="0.85">
-      <p class="fact__fig">1890–1914</p>
-      <p class="fact__text">The years Chinese arrivals in Vancouver were held for inspection in a CPR-owned shed at the foot of Burrard Street.</p>
-      <p class="fact__src">Source: UBC Library, The Head Tax</p>
-    </aside>
-
-    <figure class="archive-image figure">
-      <div class="print" data-print style="--ratio: 480 / 341">
-        <button class="print__toggle" type="button" aria-pressed="false" aria-controls="back-shed" aria-label="Turn the print over to read its notes"></button>
-        <div class="print__card">
-          <div class="print__face print__front">
-            <img src="detention-shed-cva-153-2.jpg" alt="A long two-storey wooden building with a gabled roof and three dormers, raised on wooden pilings over mudflats at the water’s edge.">
-          </div>
-          <div class="print__face print__back" id="back-shed" aria-hidden="true">
-            <p class="print__back-tag">Back of print · notes</p>
-            <p class="print__note">The CPR-owned shed where Chinese arrivals were held for inspection, 1890–1914.</p>
-            <p class="print__note">City of Vancouver Archives · CVA 153-2</p>
-            <p class="print__note">One of Telltale’s three sites. [Our reporting: paraphrase from the interview, credited to Faith.]</p>
-            <div class="print__foot"><a class="print__link" href="https://searcharchives.vancouver.ca/" target="_blank" rel="noopener" tabindex="-1">→ View in archive</a><span class="print__hint">Click to flip back</span></div>
-          </div>
-        </div>
+  <section class="grid ch" aria-labelledby="ch2">
+    <div class="sites c-full">
+      <div class="sites__intro">
+        <header class="marker">
+          <div class="marker__row"><p class="marker__num" aria-hidden="true">02</p><span class="marker__rule"></span></div>
+          <h2 id="ch2">Three sites that disappeared</h2>
+        </header>
+        <div class="reporting"><p>The game features three sites: the Galiano Saltery, the Detention Shed and the railway encampment.</p>
+          <div class="ph-tags"><span class="ph-tag"><b>Must-have</b> Background on the three sites (narrative)</span></div></div>
       </div>
-      <figcaption class="caption">
-        <p class="caption__text">Chinese Detention Shed, foot of Burrard Street, Vancouver, 1890.</p>
-        <p class="caption__credit">City of Vancouver Archives · CVA 153-2 · Click the photo to turn it over</p>
-      </figcaption>
-    </figure>
-
-    <div class="reporting reporting-b">
-      <p>[Our reporting: paraphrase from the interview, credited to April.]</p>
+      <div class="sites__map" aria-label="Map of the three sites">
+        <div class="map" id="sites-map" role="img" aria-label="Map showing the railway camp at Kamloops, the detention shed in Vancouver and Galiano Island."></div>
+        <figure class="today today--panel" aria-live="polite">
+          <img class="today__img" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="" hidden>
+          <figcaption><p class="map__note"><span class="map__now">The three sites</span></p>
+            <p class="today__text" hidden><span class="today__label">Today</span> <span class="today__note"></span></p>
+            <a class="today__credit" href="#" target="_blank" rel="noopener" hidden></a></figcaption>
+        </figure>
+      </div>
+      <div class="sites__steps">
+      <article class="step" id="site-railway" data-today-src="media/today-kamloops.jpg" data-today-note="Kamloops is now a city, and the rail line still runs through downtown along the river." data-today-credit="Photo: Acmacaulay, 2017 · CC BY-SA 4.0" data-today-link="https://commons.wikimedia.org/wiki/File:Downtown-Kamloops-Skyline.jpg" data-today-alt="Downtown Kamloops seen from a hillside, with a rail line running between the buildings and the river." data-lat="50.6745" data-lng="-120.3273" data-zoom="9" data-label="Kamloops" aria-labelledby="site-railway-h">
+        <div class="site"><div class="site__icons" aria-hidden="true"><img src="media/site-tracks.svg" alt="" height="72"><img src="media/site-tent.svg" alt="" height="72"></div>
+          <h3 id="site-railway-h"><span class="site__num">A</span> The railway encampment <span>CPR camps · 1880s</span></h3></div>
+        <p class="step__where"><span aria-hidden="true">◉</span> On the map: Kamloops, where the 1886 camp photo was taken. Where Telltale’s camp sits is still to confirm.</p>
+        
+        <div class="gallery">
+          <figure class="archive-image gallery__item" data-key="rail-1">
+            <div class="print" data-print style="--ratio: 900 / 754">
+              <button class="print__toggle" type="button" aria-pressed="false" aria-controls="back-101" aria-label="Turn the print over to read its notes"></button>
+              <div class="print__card">
+                <div class="print__face print__front"><img src="media/railway-life-tc2.jpg" width="900" height="754" loading="lazy" alt="Tents and wooden shelters beside a railway track in a forested valley, with workers among the tents."></div>
+                <div class="print__face print__back" id="back-101" aria-hidden="true">
+                  <p class="print__back-tag">Back of print · notes</p><p class="print__note">A railway camp beside the track, with tents and cooking shelters.</p><p class="print__note">Holding archive: to confirm. Ellen found it through The Critical Thinking Consortium.</p><p class="print__note">Why it is here: it shows the kind of camp Telltale’s railway site is built around.</p>
+                  <div class="print__foot"><a class="print__link" href="https://share.google/85bj2YAkPP3ipnL4A" target="_blank" rel="noopener" tabindex="-1">→ View source</a><span class="print__hint">Click to flip back</span></div>
+                </div>
+              </div>
+            </div>
+            <figcaption class="caption">
+              <p class="caption__text">Chinese Canadian life on the railway.</p>
+              <p class="caption__credit">Found via The Critical Thinking Consortium · holding archive to confirm</p>
+            </figcaption>
+          </figure>
+          <figure class="archive-image gallery__item" hidden data-key="rail-2">
+            <div class="print" data-print style="--ratio: 642 / 478">
+              <button class="print__toggle" type="button" aria-pressed="false" aria-controls="back-102" aria-label="Turn the print over to read its notes"></button>
+              <div class="print__card">
+                <div class="print__face print__front"><img src="media/railway-camp-kamloops-1886.jpg" width="642" height="478" loading="lazy" alt="A row of canvas tents along a dirt road beside railway tracks, with low hills in the distance."></div>
+                <div class="print__face print__back" id="back-102" aria-hidden="true">
+                  <p class="print__back-tag">Back of print · notes</p><p class="print__note">A labourers’ camp of canvas tents next to the CPR line at Kamloops, 1886.</p><p class="print__note">Holding archive: to confirm.</p><p class="print__note">Why it is here: the tents and the track are the two things Ellen drew for this site.</p>
+                  <div class="print__foot"><a class="print__link" href="https://share.google/YprTDVGHEWB1bqjNf" target="_blank" rel="noopener" tabindex="-1">→ View source</a><span class="print__hint">Click to flip back</span></div>
+                </div>
+              </div>
+            </div>
+            <figcaption class="caption">
+              <p class="caption__text">Canadian Pacific Railway Chinese labourers’ camp, Kamloops, 1886.</p>
+              <p class="caption__credit">Found via Gold Trails &amp; Ghost Towns (2023) · holding archive to confirm</p>
+            </figcaption>
+          </figure>
+          <figure class="archive-image gallery__item" hidden data-key="rail-3">
+            <div class="print" data-print style="--ratio: 1200 / 664">
+              <button class="print__toggle" type="button" aria-pressed="false" aria-controls="back-103" aria-label="Turn the print over to read its notes"></button>
+              <div class="print__card">
+                <div class="print__face print__front"><img src="gn-track-gang-rbcm-d-07548.jpg" width="1200" height="664" loading="lazy" alt="A large group of men in work clothes and hats posing on a railway track in a forest clearing."></div>
+                <div class="print__face print__back" id="back-103" aria-hidden="true">
+                  <p class="print__back-tag">Back of print · notes</p><p class="print__note">Often shared online as a photo of Chinese CPR workers.</p><p class="print__note">The Royal BC Museum catalogue identifies it as a Great Northern Railway track gang, c. 1884.</p><p class="print__note">Why it is here: our captions follow the catalogue, not the caption a photo picked up online.</p>
+                  <div class="print__foot"><a class="print__link" href="https://cumberlandhistory.ca/asset/great-northern-railways-track-gang/" target="_blank" rel="noopener" tabindex="-1">→ View source</a><span class="print__hint">Click to flip back</span></div>
+                </div>
+              </div>
+            </div>
+            <figcaption class="caption">
+              <p class="caption__text">Great Northern Railway track gang, c. 1884.</p>
+              <p class="caption__credit">Royal BC Museum · D-07548</p>
+            </figcaption>
+          </figure>
+        </div>
+        <div class="thumbs" role="group" aria-label="More photos from this site"><button class="thumb" type="button" aria-pressed="true" data-show="rail-1" aria-label="Show: Chinese Canadian life on the railway."><img src="media/railway-life-tc2.jpg" alt=""></button><button class="thumb" type="button" aria-pressed="false" data-show="rail-2" aria-label="Show: Canadian Pacific Railway Chinese labourers’ camp, Kamloops, 1886."><img src="media/railway-camp-kamloops-1886.jpg" alt=""></button><button class="thumb" type="button" aria-pressed="false" data-show="rail-3" aria-label="Show: Great Northern Railway track gang, c. 1884."><img src="gn-track-gang-rbcm-d-07548.jpg" alt=""></button><span class="thumbs__count">3 photos</span></div>
+        <div class="ph-tags"><span class="ph-tag"><b>Good-to-have</b> Ambient railway sound, subject to approval</span></div>
+      <figure class="today today--inline">
+          <img src="media/today-kamloops.jpg" width="960" height="447" loading="lazy" alt="Downtown Kamloops seen from a hillside, with a rail line running between the buildings and the river.">
+          <figcaption><span class="today__label">Today</span> Kamloops is now a city, and the rail line still runs through downtown along the river. <a class="today__credit" href="https://commons.wikimedia.org/wiki/File:Downtown-Kamloops-Skyline.jpg" target="_blank" rel="noopener">Photo: Acmacaulay, 2017 · CC BY-SA 4.0</a></figcaption>
+        </figure>
+      </article>
+      <article class="step" id="site-shed" data-today-src="media/today-canada-place.jpg" data-today-note="This stretch of the downtown waterfront is now home to Canada Place and the cruise ship terminal." data-today-credit="Photo: Ian Spence, 2017 · CC BY 3.0" data-today-link="https://commons.wikimedia.org/wiki/File:Canada_Place_(213050673).jpeg" data-today-alt="Canada Place, a pier building with white sail-shaped roofs, on the Vancouver waterfront." data-lat="49.2878" data-lng="-123.1168" data-zoom="14" data-label="Foot of Burrard St." aria-labelledby="site-shed-h">
+        <div class="site"><div class="site__icons" aria-hidden="true"><img src="media/site-window.svg" alt="" height="72"><img src="media/site-shed.svg" alt="" height="72"></div>
+          <h3 id="site-shed-h"><span class="site__num">B</span> The detention shed <span>Vancouver · 1890–1914</span></h3></div>
+        <p class="step__where"><span aria-hidden="true">◉</span> On the map: the foot of Burrard Street, on today’s waterfront. The 1890 shoreline was different, so the spot is approximate.</p>
+        <aside class="fact fact--compact"><p class="fact__fig">1890–1914</p><p class="fact__text">The years Chinese arrivals in Vancouver were held for inspection in a CPR-owned shed at the foot of Burrard Street.</p><p class="fact__src">Source: UBC Library, The Head Tax</p></aside>
+        <div class="gallery">
+          <figure class="archive-image gallery__item" data-key="shed-1">
+            <div class="print" data-print style="--ratio: 480 / 341">
+              <button class="print__toggle" type="button" aria-pressed="false" aria-controls="back-104" aria-label="Turn the print over to read its notes"></button>
+              <div class="print__card">
+                <div class="print__face print__front"><img src="detention-shed-cva-153-2.jpg" width="480" height="341" loading="lazy" alt="A long two-storey wooden building with a gabled roof and three dormers, raised on wooden pilings over mudflats at the water’s edge."></div>
+                <div class="print__face print__back" id="back-104" aria-hidden="true">
+                  <p class="print__back-tag">Back of print · notes</p><p class="print__note">The CPR-owned shed where Chinese arrivals were held for inspection, 1890–1914.</p><p class="print__note">City of Vancouver Archives · CVA 153-2</p><p class="print__note">One of Telltale’s three sites.</p>
+                  <div class="print__foot"><a class="print__link" href="https://searcharchives.vancouver.ca/" target="_blank" rel="noopener" tabindex="-1">→ View source</a><span class="print__hint">Click to flip back</span></div>
+                </div>
+              </div>
+            </div>
+            <figcaption class="caption">
+              <p class="caption__text">Chinese Detention Shed, foot of Burrard Street, Vancouver, 1890.</p>
+              <p class="caption__credit">City of Vancouver Archives · CVA 153-2</p>
+            </figcaption>
+          </figure>
+          <figure class="archive-image gallery__item" hidden data-key="shed-2">
+            <div class="print" data-print style="--ratio: 668 / 459">
+              <button class="print__toggle" type="button" aria-pressed="false" aria-controls="back-105" aria-label="Turn the print over to read its notes"></button>
+              <div class="print__card">
+                <div class="print__face print__front"><img src="media/detention-hospital-search.jpg" width="668" height="459" loading="lazy" alt="Wooden shacks and lean-tos among trees, with a tall pole in the foreground."></div>
+                <div class="print__face print__back" id="back-105" aria-hidden="true">
+                  <p class="print__back-tag">Back of print · notes</p><p class="print__note">Ellen found this while researching the detention hospital (2025 article).</p><p class="print__note">What it shows, when, and where it is held all need confirming before it goes in.</p>
+                  <div class="print__foot"><a class="print__link" href="https://share.google/aVQjWDBdDZ80CZ4SU" target="_blank" rel="noopener" tabindex="-1">→ View source</a><span class="print__hint">Click to flip back</span></div>
+                </div>
+              </div>
+            </div>
+            <figcaption class="caption">
+              <p class="caption__text">Photograph found while researching the detention hospital.</p>
+              <p class="caption__credit">Subject, date and holding archive to confirm</p>
+            </figcaption>
+          </figure>
+        </div>
+        <div class="thumbs" role="group" aria-label="More photos from this site"><button class="thumb" type="button" aria-pressed="true" data-show="shed-1" aria-label="Show: Chinese Detention Shed, foot of Burrard Street, Vancouver, 1890."><img src="detention-shed-cva-153-2.jpg" alt=""></button><button class="thumb" type="button" aria-pressed="false" data-show="shed-2" aria-label="Show: Photograph found while researching the detention hospital."><img src="media/detention-hospital-search.jpg" alt=""></button><span class="thumbs__count">2 photos</span></div>
+        <div class="ph-tags"><span class="ph-tag"><b>Good-to-have</b> Detention shed blueprint</span></div>
+      <figure class="today today--inline">
+          <img src="media/today-canada-place.jpg" width="960" height="638" loading="lazy" alt="Canada Place, a pier building with white sail-shaped roofs, on the Vancouver waterfront.">
+          <figcaption><span class="today__label">Today</span> This stretch of the downtown waterfront is now home to Canada Place and the cruise ship terminal. <a class="today__credit" href="https://commons.wikimedia.org/wiki/File:Canada_Place_(213050673).jpeg" target="_blank" rel="noopener">Photo: Ian Spence, 2017 · CC BY 3.0</a></figcaption>
+        </figure>
+      </article>
+      <article class="step" id="site-saltery" data-today-src="media/today-sturdies-bay.jpg" data-today-note="Sturdies Bay, the bay in Ellen’s 1920s postcard, is now the island’s BC Ferries terminal." data-today-credit="Photo: David Stanley, 2012 · CC BY 2.0" data-today-link="https://commons.wikimedia.org/wiki/File:Sturdies_Bay_Ferry_Terminal_(7743624182).jpg" data-today-alt="A long wooden dock leading to the ferry ramp at Sturdies Bay, with forested hills behind." data-lat="48.9245" data-lng="-123.4255" data-zoom="11" data-label="Galiano Island" aria-labelledby="site-saltery-h">
+        <div class="site"><div class="site__icons" aria-hidden="true"><img src="media/site-net.svg" alt="" height="72"><img src="media/site-fish.svg" alt="" height="72"></div>
+          <h3 id="site-saltery-h"><span class="site__num">C</span> The herring saltery <span>Galiano Island · 1930s</span></h3></div>
+        <p class="step__where"><span aria-hidden="true">◉</span> On the map: Galiano Island. The saltery’s exact site is still to confirm.</p>
+        
+        <div class="gallery">
+          <figure class="archive-image gallery__item" data-key="gal-1">
+            <div class="print" data-print style="--ratio: 690 / 444">
+              <button class="print__toggle" type="button" aria-pressed="false" aria-controls="back-106" aria-label="Turn the print over to read its notes"></button>
+              <div class="print__card">
+                <div class="print__face print__front"><img src="media/galiano-sturdies-bay-1920s.jpg" width="690" height="444" loading="lazy" alt="A postcard view of a small post office building, a car and people walking toward a long dock on a bay."></div>
+                <div class="print__face print__back" id="back-106" aria-hidden="true">
+                  <p class="print__back-tag">Back of print · notes</p><p class="print__note">Galiano Island around the time of the saltery. It is not the saltery itself.</p><p class="print__note">The title and date are printed on the postcard.</p><p class="print__note">Holding archive: to confirm.</p>
+                  <div class="print__foot"><a class="print__link" href="https://share.google/0r2ohw8RVLsL6jEtj" target="_blank" rel="noopener" tabindex="-1">→ View source</a><span class="print__hint">Click to flip back</span></div>
+                </div>
+              </div>
+            </div>
+            <figcaption class="caption">
+              <p class="caption__text">Early post office and dock, Sturdies Bay, Galiano Island, c. 1920s.</p>
+              <p class="caption__credit">Heritage Galiano Island postcard · holding archive to confirm</p>
+            </figcaption>
+          </figure>
+          <figure class="archive-image gallery__item" hidden data-key="gal-2">
+            <div class="print" data-print style="--ratio: 416 / 280">
+              <button class="print__toggle" type="button" aria-pressed="false" aria-controls="back-107" aria-label="Turn the print over to read its notes"></button>
+              <div class="print__card">
+                <div class="print__face print__front"><img src="media/galiano-whaler-bay-house.jpg" width="416" height="280" loading="lazy" alt="A low house among tall trees on the shore of a bay, with a wooden walkway along the water."></div>
+                <div class="print__face print__back" id="back-107" aria-hidden="true">
+                  <p class="print__back-tag">Back of print · notes</p><p class="print__note">A house on Whaler Bay, from an article asking about its history.</p><p class="print__note">Date and holding archive: to confirm.</p>
+                  <div class="print__foot"><a class="print__link" href="https://share.google/00PMGPNqLEaGNBFbE" target="_blank" rel="noopener" tabindex="-1">→ View source</a><span class="print__hint">Click to flip back</span></div>
+                </div>
+              </div>
+            </div>
+            <figcaption class="caption">
+              <p class="caption__text">A house at Whaler Bay, Galiano Island.</p>
+              <p class="caption__credit">Found via a 2013 article · date and holding archive to confirm</p>
+            </figcaption>
+          </figure>
+        </div>
+        <div class="thumbs" role="group" aria-label="More photos from this site"><button class="thumb" type="button" aria-pressed="true" data-show="gal-1" aria-label="Show: Early post office and dock, Sturdies Bay, Galiano Island, c. 1920s."><img src="media/galiano-sturdies-bay-1920s.jpg" alt=""></button><button class="thumb" type="button" aria-pressed="false" data-show="gal-2" aria-label="Show: A house at Whaler Bay, Galiano Island."><img src="media/galiano-whaler-bay-house.jpg" alt=""></button><span class="thumbs__count">2 photos</span></div>
+        <div class="ph-tags"><span class="ph-tag"><b>Must-have</b> A photo of the saltery itself</span></div>
+      <figure class="today today--inline">
+          <img src="media/today-sturdies-bay.jpg" width="960" height="720" loading="lazy" alt="A long wooden dock leading to the ferry ramp at Sturdies Bay, with forested hills behind.">
+          <figcaption><span class="today__label">Today</span> Sturdies Bay, the bay in Ellen’s 1920s postcard, is now the island’s BC Ferries terminal. <a class="today__credit" href="https://commons.wikimedia.org/wiki/File:Sturdies_Bay_Ferry_Terminal_(7743624182).jpg" target="_blank" rel="noopener">Photo: David Stanley, 2012 · CC BY 2.0</a></figcaption>
+        </figure>
+      </article>
+      </div>
     </div>
+  </section>
 
-    <div class="placeholder">
-      <span class="tag">Good-to-have</span>
-      <p>Detention shed blueprint</p>
+  <section class="grid ch" aria-labelledby="ch3">
+    <header class="marker c-marker">
+      <div class="marker__row"><p class="marker__num" aria-hidden="true">03</p><span class="marker__rule"></span></div>
+      <h2 id="ch3">Choosing a boat</h2>
+    </header>
+    <div class="reporting c-left"><p>The player encounters these sites through the first-person perspective of a Chinese Canadian character of their choosing and they make decisions that determine the outcome of the character’s life, whether they thrive, get deported, make it rich, survive or die. Progressing through the journey, they collect archival material that are digital recreations of archives that Liu and Moosang had uncovered through their research.</p><p>You start off in the Hong Kong Harbour where you decide on which boat to embark to get to Canada. Each boat has a word rooted in emotion: love, duty, adventure.</p><p class="gap">[Sophia: confirm the boat words]</p></div>
+    <div class="chips c-right" aria-label="The three boat words">
+      <span class="chip">Love</span><span class="chip chip--red">Duty</span><span class="chip">Adventure</span>
     </div>
+  </section>
 
-    <div class="cards">
+  <section class="grid ch" aria-labelledby="ch4">
+    <header class="marker c-marker">
+      <div class="marker__row"><p class="marker__num" aria-hidden="true">04</p><span class="marker__rule"></span></div>
+      <h2 id="ch4">Piecing fragments together</h2>
+    </header>
+    <div class="reporting c-left"><p>The goal with <cite>Telltale</cite> was to make an immersive and interactive game to resonate with its audience and the substantial research that backs up the narrative makes it feel concrete.</p><p>Liu describes the process of making <cite>Telltale</cite> as piecing fragments together. They gather as many of these fragments as they can through speaking with professors and archeologists and reaching out to organizations to learn as much as possible about these spaces. Simple accounts of the space become valuable information to them: the strong smell of fish, the windows letting in air flow and light.</p></div>
+  </section>
+
+  <section class="drift" aria-label="Archival fragments">
+    <h3 class="drift__head">A lost space, pieced together from fragments</h3>
+    <div class="drift__field">
+      <figure class="drift__item" data-speed="0.85" style="--x:2%; --y:2%; --w:19%">
+        <img src="media/railway-life-tc2.jpg" width="900" height="754" loading="lazy" alt=""><figcaption>Railway camp · source to confirm</figcaption>
+      </figure>
+      <figure class="drift__item" data-speed="1.25" style="--x:72%; --y:8%; --w:24%">
+        <img src="detention-shed-cva-153-2.jpg" width="480" height="341" loading="lazy" alt=""><figcaption>CVA 153-2</figcaption>
+      </figure>
+      <figure class="drift__item" data-speed="0.8" style="--x:76%; --y:58%; --w:20%">
+        <img src="media/galiano-whaler-bay-house.jpg" width="416" height="280" loading="lazy" alt=""><figcaption>Whaler Bay, Galiano</figcaption>
+      </figure>
+      <figure class="drift__item" data-speed="1.3" style="--x:7%; --y:44%; --w:21%">
+        <img src="media/railway-camp-kamloops-1886.jpg" width="642" height="478" loading="lazy" alt=""><figcaption>Kamloops, 1886</figcaption>
+      </figure>
+      <figure class="drift__item" data-speed="1.05" style="--x:1%; --y:84%; --w:18%">
+        <img src="media/galiano-sturdies-bay-1920s.jpg" width="690" height="444" loading="lazy" alt=""><figcaption>Sturdies Bay, c. 1920s</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="grid ch" aria-label="Piecing fragments together, continued">
+    <div class="reporting c-left"><p>Liu and Moosang are meticulous about researching even the small details so that the narrative has a strong basis of actual events. One of the characters meets with Dr. Sun Yat-sen and Liu and Moosang researched where he was during the time of the story and adjusted the narrative to fit. Every aspect of the narrative is accounted for and researched to be as accurate as possible such as how long the boat journey takes from Coal Harbour to Galiano.</p><p>While so much research had been collected to piece together these stories, there are still many gaps of information lost to history. Liu and Moosang fictionalize some aspects to mitigate some of these gaps. As experts in these spaces through years of research, they are able to fill in the gaps through extrapolating and connecting the pieces together in a plausible manner.</p></div>
+    <aside class="annotation c-right" data-speed="0.9"><p class="annotation__label">Never fiction</p><p class="annotation__text">Language · dialogue · historical events · clothing · social relations and hierarchies</p></aside>
+    <div class="reporting c-left"><p>Some of these gaps are intentionally left open for the audience to fill in through their own imagination. Liu and Moosang employ a dreamlike, poetic aesthetic that places emotion at the heart of the narrative and allows for ambiguity. Some things, they choose not to show, leaving the audience simply looking at the suggestion of something there.</p><p>They tie choice back to how we understand history. There is no complete, objective history that exists; we all see little fragments and different sections that come nowhere close to allowing us to understand the entire scope of it. Yet, we fill in the gaps and come up with our own interpretation of history.</p><p>The lines between fiction and history are blurred through this game, although there are elements that Liu and Moosang strictly ensured would not be fiction. Language, dialogue, historical events and clothing had to be specific to the time period, so with the social relations and hierarchies between people. Together, these details establish the cultural and historical context in which the narrative unfolds.</p></div>
+  </section>
+
+  <section class="grid ch" aria-labelledby="ch5">
+    <header class="marker c-marker">
+      <div class="marker__row"><p class="marker__num" aria-hidden="true">05</p><span class="marker__rule"></span></div>
+      <h2 id="ch5">Walking in their shoes</h2>
+    </header>
+    <div class="reporting c-left"><p>Historical recounts are often dry. It reduces people into flat characters and fails to capture what makes them people: motivations, emotions, relationships, fears. Through a VR world, the first-person lens it’s viewed through, and agency in the narrative, the player get to walk in these people’s shoes and learn about the experience of early Chinese Canadians through empathy.</p><p>The player feels the exclusion from society and the Canadian government blocking their friends, family and people from coming in. They feel the sentiments directly and make decisions that align with the motivations of many of the Chinese Canadians at this time: fighting to keep their business running and struggling to support their family.</p></div>
+    <div class="placeholder c-right"><span class="tag">Good-to-have</span><p>Footage from Telltale, only with Faith and April’s permission</p></div>
+  </section>
+
+  <section class="grid ch" aria-labelledby="ch6">
+    <header class="marker c-marker">
+      <div class="marker__row"><p class="marker__num" aria-hidden="true">06</p><span class="marker__rule"></span></div>
+      <h2 id="ch6">What archives can do</h2>
+    </header>
+    <div class="reporting c-left"><p>Through this project, Liu and Moosang aim to show what archives can do. They tie real archives to the story and give them emotional weight, they allow the audience to learn more about these archives at the end of the story. Knowing that these materials each have a story and people had emotional connections with them, as well as the viewer empathizing with that firsthand, Liu and Moosang hope it would allow <cite>Telltale</cite> to be a gateway to learning more about archives and the stories behind them.</p><p><cite>Telltale</cite> pushes technology to its limits, exploring what can and can’t be done. Liu and Moosang believe in the potential for <cite>Telltale</cite>’s format to be used as a model for archives and educational organizations, museums, cultural groups, and communities trying to keep their histories alive. With many of these histories</p><p class="gap">[Sophia: sentence continues]</p></div>
+    <p class="cards__label c-full">Where these images come from</p>
+    <div class="cards c-full">
+      
       <a class="card" data-speed="0.9" href="https://searcharchives.vancouver.ca/" target="_blank" rel="noopener">
         <div class="card__thumb"><img src="detention-shed-cva-153-2.jpg" width="480" height="341" alt=""></div>
         <p class="card__archive">City of Vancouver Archives</p>
         <p class="card__item">Chinese Detention Shed at Vancouver, 1890 · CVA 153-2</p>
         <span class="card__go">→ Open source</span>
       </a>
+      
       <a class="card" data-speed="1.1" href="https://cumberlandhistory.ca/asset/great-northern-railways-track-gang/" target="_blank" rel="noopener">
         <div class="card__thumb"><img src="gn-track-gang-rbcm-d-07548.jpg" width="1200" height="664" alt=""></div>
         <p class="card__archive">Royal BC Museum</p>
         <p class="card__item">Great Northern Railway track gang, c. 1884 · D-07548 (long mis-captioned as CPR workers)</p>
         <span class="card__go">→ Open source</span>
       </a>
+      
       <a class="card" data-speed="1" href="https://gallery.library.ubc.ca/the-head-tax/" target="_blank" rel="noopener">
-        <div class="card__thumb"><span>UBC Library exhibition</span></div>
+        <div class="card__thumb"><span>UBC Library</span></div>
         <p class="card__archive">UBC Library</p>
         <p class="card__item">The Head Tax</p>
         <span class="card__go">→ Open source</span>
       </a>
+      
+      <a class="card" data-speed="0.9" href="https://share.google/YprTDVGHEWB1bqjNf" target="_blank" rel="noopener">
+        <div class="card__thumb"><img src="media/railway-camp-kamloops-1886.jpg" width="642" height="478" alt=""></div>
+        <p class="card__archive">Gold Trails &amp; Ghost Towns</p>
+        <p class="card__item">CPR Chinese labourers’ camp, Kamloops, 1886 · archive to confirm</p>
+        <span class="card__go">→ Open source</span>
+      </a>
+      
+      <a class="card" data-speed="1.1" href="https://share.google/85bj2YAkPP3ipnL4A" target="_blank" rel="noopener">
+        <div class="card__thumb"><img src="media/railway-life-tc2.jpg" width="900" height="754" alt=""></div>
+        <p class="card__archive">The Critical Thinking Consortium</p>
+        <p class="card__item">Chinese Canadian life on the railway · archive to confirm</p>
+        <span class="card__go">→ Open source</span>
+      </a>
+      
+      <a class="card" data-speed="1" href="https://share.google/0r2ohw8RVLsL6jEtj" target="_blank" rel="noopener">
+        <div class="card__thumb"><img src="media/galiano-sturdies-bay-1920s.jpg" width="690" height="444" alt=""></div>
+        <p class="card__archive">Heritage Galiano Island</p>
+        <p class="card__item">Early post office and dock, Sturdies Bay, c. 1920s · archive to confirm</p>
+        <span class="card__go">→ Open source</span>
+      </a>
     </div>
 
-    <p class="end-note">Prototype of one chapter. Text marked [Our reporting] is placeholder copy until the narrative is final. Faith and April’s ideas are paraphrased and credited, never quoted.</p>
-  </div>
+    <p class="end-note c-left">Narrative: Sophia (draft). Media: Ellen. Design and code: Cherry. Chapter names are working titles. Lines in [brackets] mark gaps still to fill. Faith and April’s ideas are paraphrased and credited, never quoted.</p>
+  </section>
 </main>
 
 <script>
@@ -457,6 +812,71 @@ document.querySelectorAll('[data-print]').forEach((print) => {
   toggle.addEventListener('click', () => set(!print.classList.contains('is-flipped')));
   print.addEventListener('keydown', (e) => { if (e.key === 'Escape' && print.classList.contains('is-flipped')) { set(false); toggle.focus(); } });
 });
+
+/* ===== Three sites: the map follows the scroll ===== */
+(() => {
+  const steps = [...document.querySelectorAll('.step')], el = document.getElementById('sites-map');
+  if (!steps.length || !el) return;
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches, now = document.querySelector('.map__now');
+  let map = null; const pins = {};
+  if (window.L) {
+    map = L.map(el, { scrollWheelZoom: false, dragging: !L.Browser.mobile, zoomSnap: 0.25 });
+    const esri = (layer) => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/${layer}/MapServer/tile/{z}/{y}/{x}`;
+    L.tileLayer(esri('World_Light_Gray_Base'), { maxZoom: 16, attribution: 'Tiles © Esri · Esri, HERE, Garmin, © OpenStreetMap contributors' }).addTo(map);
+    L.tileLayer(esri('World_Light_Gray_Reference'), { maxZoom: 16, pane: 'overlayPane' }).addTo(map);   // place names above the base
+    for (const s of steps) {
+      const icon = L.divIcon({ className: '', iconSize: [0, 0], html: `<span class="pin"><span class="pin__dot"></span><span class="pin__label">${s.dataset.label}</span></span>` });
+      pins[s.id] = L.marker([+s.dataset.lat, +s.dataset.lng], { icon, keyboard: false }).addTo(map)
+        .on('click', () => s.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' }));
+    }
+    map.fitBounds(L.latLngBounds(steps.map((s) => [+s.dataset.lat, +s.dataset.lng])), { padding: [50, 50] });
+    addEventListener('resize', () => map.invalidateSize());
+  } else {
+    el.innerHTML = '<p class="map__fallback">The map could not load. The sites: Kamloops (railway camp photo), the foot of Burrard Street in Vancouver, and Galiano Island.</p>';
+  }
+  let current = null;
+  const activate = (s) => {
+    if (s === current) return; current = s;
+    steps.forEach((x) => x.classList.toggle('is-active', x === s));
+    if (now) now.textContent = s.dataset.label;
+    const panel = document.querySelector('.today--panel');
+    if (panel && s.dataset.todaySrc) {
+      const img = panel.querySelector('.today__img'), text = panel.querySelector('.today__text'), cr = panel.querySelector('.today__credit');
+      img.src = s.dataset.todaySrc; img.alt = s.dataset.todayAlt; img.hidden = false;
+      panel.querySelector('.today__note').textContent = s.dataset.todayNote; text.hidden = false;
+      cr.textContent = s.dataset.todayCredit; cr.href = s.dataset.todayLink; cr.hidden = false;
+    }
+    if (!map) return;
+    for (const [id, m] of Object.entries(pins)) m.getElement()?.querySelector('.pin')?.classList.toggle('is-active', id === s.id);
+    const to = [+s.dataset.lat, +s.dataset.lng], z = +s.dataset.zoom;
+    calm ? map.setView(to, z) : map.flyTo(to, z, { duration: 1.8 });
+  };
+  const io = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && activate(e.target)), { rootMargin: '-45% 0px -45% 0px' });
+  steps.forEach((s) => io.observe(s));
+  const pick = new URLSearchParams(location.search).get('site');   // ?site=railway|shed|saltery for screenshots
+  if (pick) activate(document.getElementById('site-' + pick) || steps[0]);
+})();
+
+/* ===== Site galleries: thumbnails swap the main print ===== */
+document.querySelectorAll('.step').forEach((step) => {
+  const thumbs = step.querySelectorAll('.thumb'), items = step.querySelectorAll('.gallery__item');
+  thumbs.forEach((t) => t.addEventListener('click', () => {
+    items.forEach((it) => {
+      const on = it.dataset.key === t.dataset.show;
+      const p = it.querySelector('.print');
+      if (!on && p.classList.contains('is-flipped')) p.querySelector('.print__toggle').click();
+      it.hidden = !on;
+    });
+    thumbs.forEach((x) => x.setAttribute('aria-pressed', String(x === t)));
+  }));
+});
+
+/* ===== Text chips: the boat words appear one at a time ===== */
+(() => {
+  const chips = document.querySelector('.chips'); if (!chips) return;
+  if (!('IntersectionObserver' in window) || new URLSearchParams(location.search).get('chapter')) { chips.classList.add('is-in'); return; }
+  new IntersectionObserver((es, io) => { if (es[0].isIntersecting) { chips.classList.add('is-in'); io.disconnect(); } }, { threshold: 0.6 }).observe(chips);
+})();
 
 /* ===== Parallax (desktop only, off with reduced motion) ===== */
 (() => {

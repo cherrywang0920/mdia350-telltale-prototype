@@ -2,10 +2,23 @@
 
 Coded prototype for a MDIA 350 (UBC, Fall 2026) scrollytelling piece about how Faith Moosang and April Liu make *Telltale*.
 
-It has the opening dissolve and Chapter 01, including the Archive Image print flip. Text marked [Our reporting] is placeholder copy.
+- **Narrative:** Sophia (draft)
+- **Media assets:** Ellen
+- **Design and code:** Cherry
 
-Images are public archival photographs, credited on the page:
-- City of Vancouver Archives, CVA 153-2
-- Royal BC Museum, D-07548
+## What's in it
+
+- The opening dissolve.
+- Six chapters.
+- A sticky map for the three sites, with a "Today" photo for each.
+- Archive prints that flip over.
+- Text marked in [brackets] is still to be written.
+
+## Images
+
+- **Archival photographs:** credited on the page. Where the holding archive is still being confirmed, the caption says so.
+- **"Today" photos:** from Wikimedia Commons, under the licences shown on the page.
+- **Site illustrations:** redrawn from Ellen's sketches.
+- **Map tiles:** © Esri, HERE, Garmin, © OpenStreetMap contributors.
 
 No partner artwork is included.
