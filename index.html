@@ -160,9 +160,6 @@
   .thumb:hover { opacity: 1; }
   .thumb:focus-visible { outline: 2px solid var(--color-accent-red); outline-offset: 3px; }
   .thumbs__count { font: 400 11px/16px var(--font-sans); color: var(--color-text-muted); margin-left: 4px; }
-  .ph-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-  .ph-tag { font: 400 12px/16px var(--font-sans); border: 1.5px dashed var(--color-text-muted); padding: 6px 10px; background: var(--color-bg-raised); }
-  .ph-tag b { font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 10px; margin-right: 6px; color: var(--color-text-muted); }
   .pin { position: relative; display: block; }
   .pin__dot { position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; border-radius: 50%; background: var(--paper-0); border: 3px solid var(--ink-950); box-sizing: border-box; transition: transform 300ms var(--settle), background 300ms; }
   .pin__label { position: absolute; left: 12px; top: -10px; white-space: nowrap; font: 800 11px/14px var(--font-sans); letter-spacing: .04em; text-transform: uppercase; color: var(--ink-950); background: var(--paper-0); padding: 3px 6px; box-shadow: 0 1px 2px rgba(35,20,14,.25); }
@@ -212,8 +209,6 @@
   .vinyl__cross { opacity: 0; transition: opacity 200ms; }
   .vinyl[aria-pressed="false"] .vinyl__cross { opacity: 1; }
   .vinyl[aria-pressed="false"] .vinyl__disc { opacity: .55; }
-  .vinyl-hint { font: 700 11px/14px var(--font-sans); letter-spacing: .04em; text-transform: uppercase; color: var(--ink-950); background: var(--paper-0); padding: 6px 10px; box-shadow: 0 2px 8px rgba(35,20,14,.2); }
-  .vinyl-hint[hidden] { display: none; }
   @media (prefers-reduced-motion: reduce) { .vinyl.is-spinning .vinyl__disc { animation: none; } }
 
   .subhead { font: 800 clamp(22px, 2.4vw, 28px)/1.2 var(--font-sans); letter-spacing: -.01em; margin: 16px 0 -28px; }
@@ -222,6 +217,15 @@
   /* Passages Sophia flagged as unsure, still waiting on more information */
   mark.unsure { background: linear-gradient(transparent 12%, rgba(242, 205, 92, .55) 12%, rgba(242, 205, 92, .55) 92%, transparent 92%); color: inherit; padding: 0 1px;
     -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+
+  /* What we still need: a plain lo-fi slot and one highlighted sentence */
+  .need { border: 1.5px dashed var(--ink-300); padding: 14px 16px; margin-top: 12px; max-width: 560px; align-self: start; }
+  .need p { font: 400 14px/22px var(--font-sans); margin: 0; }
+  .need p + p { margin-top: 10px; }
+  .need cite { font-style: italic; }
+  .need__frame { aspect-ratio: 16 / 7; margin-bottom: 12px; border: 1px solid var(--ink-300);
+    background: linear-gradient(to top right, transparent calc(50% - .6px), var(--ink-300) 50%, transparent calc(50% + .6px)),
+                linear-gradient(to bottom right, transparent calc(50% - .6px), var(--ink-300) 50%, transparent calc(50% + .6px)); }
 
   /* Text chips: the three boat words, one at a time */
   .chips { display: flex; flex-wrap: wrap; gap: 12px; align-content: flex-start; }
@@ -284,7 +288,6 @@
 </head>
 <body>
 <div class="vinyl-wrap">
-  <span class="vinyl-hint" hidden>Click anywhere for sound</span>
   <button class="vinyl" type="button" aria-pressed="true" aria-label="Sound is on. Turn sound off" title="Sound on">
     <svg viewBox="0 0 48 48" aria-hidden="true">
       <g class="vinyl__disc">
@@ -351,7 +354,7 @@ on turning archives into story</div>
           <h2 id="ch2">Playing the game</h2>
         </header>
         <div class="reporting"><p>The game features three sites: the Galiano Saltery, the Detention Shed and the railway encampment.</p>
-          <div class="ph-tags"><span class="ph-tag"><b>Must-have</b> Background on the three sites (narrative)</span></div></div>
+          <div class="need"><p><mark class="unsure">We still need a short background on each of the three sites, so readers know what these places were before they explore them.</mark></p><p><mark class="unsure">The archival photos in this section are public images we found online. We are not sure they are the ones Faith and April worked from, so if they are willing to give advice or share the images they used, we would be happy to update them.</mark></p></div></div>
       </div>
       <div class="sites__map" aria-label="Map of the three sites">
         <div class="map" id="sites-map" role="img" aria-label="Map showing the railway camp at Kamloops, the detention shed in Vancouver and Galiano Island."></div>
@@ -465,7 +468,7 @@ on turning archives into story</div>
           </figure>
         </div>
         <div class="thumbs" role="group" aria-label="More photos from this site"><button class="thumb" type="button" aria-pressed="true" data-show="shed-1" aria-label="Show: Chinese Detention Shed, foot of Burrard Street, Vancouver, 1890."><img src="detention-shed-cva-153-2.jpg" alt=""></button><button class="thumb" type="button" aria-pressed="false" data-show="shed-2" aria-label="Show: Photograph found while researching the detention hospital."><img src="media/detention-hospital-search.jpg" alt=""></button><span class="thumbs__count">2 photos</span></div>
-        <div class="ph-tags"><span class="ph-tag"><b>Good-to-have</b> Detention shed blueprint</span></div>
+        <div class="need need--media"><div class="need__frame" aria-hidden="true"></div><p><mark class="unsure">If Faith and April are comfortable sharing it, the detention shed blueprint would let readers see how the building was laid out.</mark></p></div>
       <figure class="today today--inline">
           <img src="media/today-canada-place.jpg" width="960" height="638" loading="lazy" alt="Canada Place, a pier building with white sail-shaped roofs, on the Vancouver waterfront.">
           <figcaption><span class="today__label">Today</span> This stretch of the downtown waterfront is now home to Canada Place and the cruise ship terminal. <a class="today__credit" href="https://commons.wikimedia.org/wiki/File:Canada_Place_(213050673).jpeg" target="_blank" rel="noopener">Photo: Ian Spence, 2017 · CC BY 3.0</a></figcaption>
@@ -511,7 +514,7 @@ on turning archives into story</div>
           </figure>
         </div>
         <div class="thumbs" role="group" aria-label="More photos from this site"><button class="thumb" type="button" aria-pressed="true" data-show="gal-1" aria-label="Show: Early post office and dock, Sturdies Bay, Galiano Island, c. 1920s."><img src="media/galiano-sturdies-bay-1920s.jpg" alt=""></button><button class="thumb" type="button" aria-pressed="false" data-show="gal-2" aria-label="Show: A house at Whaler Bay, Galiano Island."><img src="media/galiano-whaler-bay-house.jpg" alt=""></button><span class="thumbs__count">2 photos</span></div>
-        <div class="ph-tags"><span class="ph-tag"><b>Must-have</b> A photo of the saltery itself</span></div>
+        <div class="need need--media"><div class="need__frame" aria-hidden="true"></div><p><mark class="unsure">We are still looking for a photograph of the herring saltery itself, so readers can see the site as it was, not only the island around it.</mark></p></div>
       <p class="sound-note"><span aria-hidden="true">♪</span> In this section you hear “Soft ocean waves sounds” by kapilkant, Freesound, CC0.</p>
       <figure class="today today--inline">
           <img src="media/today-sturdies-bay.jpg" width="960" height="720" loading="lazy" alt="A long wooden dock leading to the ferry ramp at Sturdies Bay, with forested hills behind.">
@@ -578,13 +581,16 @@ on turning archives into story</div>
     </header>
     <h3 class="subhead c-left">Revitalizing historical records</h3>
     <div class="reporting c-left"><p>Historical recounts are often dry. It reduces people into flat characters and fails to capture what makes them people: motivations, emotions, relationships, fears. Through a VR world, the first-person lens it’s viewed through, and agency in the narrative, the player get to walk in these people’s shoes and learn about the experience of early Chinese Canadians through empathy.</p><p>The player feels the exclusion from society and the Canadian government blocking their friends, family and people from coming in. They feel the sentiments directly and make decisions that align with the motivations of many of the Chinese Canadians at this time: fighting to keep their business running and struggling to support their family.</p></div>
-    <div class="placeholder c-right"><span class="tag">Good-to-have</span><p>Footage from Telltale, only with Faith and April’s permission</p></div>
+    <div class="need need--media c-right"><div class="need__frame" aria-hidden="true"></div><p><mark class="unsure">With Faith and April’s permission, a short clip or still from <cite>Telltale</cite> would let readers see the world this chapter describes.</mark></p></div>
     <h3 class="subhead c-left">Emotional connection to archives</h3>
     <div class="reporting c-left"><p>Through this project, Liu and Moosang aim to show what archives can do. They tie real archives to the story and give them emotional weight, they allow the audience to learn more about these archives at the end of the story. Knowing that these materials each have a story and people had emotional connections with them, as well as the viewer empathizing with that firsthand, Liu and Moosang hope it would allow <cite>Telltale</cite> to be a gateway to learning more about archives and the stories behind them.</p></div>
+    <div class="need need--media c-right"><div class="need__frame" aria-hidden="true"></div><p><mark class="unsure">If Faith and April are comfortable sharing them, any images, archival materials or behind-the-scenes pieces connected to <cite>Telltale</cite> would help show how the story leads back to the real records.</mark></p></div>
     <h3 class="subhead c-left">Bringing history to life</h3>
     <div class="reporting c-left"><p><cite>Telltale</cite> pushes technology to its limits, exploring what can and can’t be done. Liu and Moosang believe in the potential for <cite>Telltale</cite>’s format to be used as a model for archives and educational organizations, museums, cultural groups, and communities trying to keep their histories alive. Many of these histories are dying because they have been marginalized and are incredibly fragmented and Liu and Moosang’s solution is to let the audience personally live it out. <cite>Telltale</cite> meets the audience where they’re at simply by putting a character in their hands and giving them a sense of what it was like to be them.</p></div>
+    <div class="need need--media c-right"><div class="need__frame" aria-hidden="true"></div><p><mark class="unsure">With Faith and April’s permission, an image of one of <cite>Telltale</cite>’s characters would show readers whose shoes they step into.</mark></p></div>
     <h3 class="subhead c-left">A personal connection to history</h3>
     <div class="reporting c-left"><p>Liu and Moosang hope to evoke in the audience a deep, personal connection to these histories. They have poured so much passion and care in creating <cite>Telltale</cite> and they hope that the audience would feel even a fraction of their excitement, curiosity and wonder when making these discoveries.</p></div>
+    <div class="need need--media c-right"><div class="need__frame" aria-hidden="true"></div><p><mark class="unsure">If Faith and April would like to be pictured, a photo of them at work would put the makers beside what they made.</mark></p></div>
     <p class="cards__label c-full">Where these images come from</p>
     <div class="cards c-full">
       
@@ -631,7 +637,7 @@ on turning archives into story</div>
       </a>
     </div>
 
-    <p class="end-note c-left">Narrative: Sophia. Media: Ellen. Design and code: Cherry. Sounds from Freesound: “gu_zhong_gong_yuan_3” by rasfrecci_w_donna (CC0), “the sound of the old railway cables front” by CRAFTCREST.com (CC BY 4.0), “Soft ocean waves sounds” by kapilkant (CC0). Faith and April’s ideas are paraphrased and credited, never quoted.</p>
+    <p class="end-note c-left">Narrative: Sophia. Media: Ellen. Design and code: Cherry. Sounds from Freesound: “gu_zhong_gong_yuan_3” by rasfrecci_w_donna (CC0), “the sound of the old railway cables front” by CRAFTCREST.com (CC BY 4.0), “Soft ocean waves sounds” by kapilkant (CC0).</p>
   </section>
 </main>
 
@@ -926,7 +932,6 @@ document.querySelectorAll('.step').forEach((step) => {
    Browsers only allow sound after the reader's first click, tap or key press, so until then it waits. ===== */
 (() => {
   const btn = document.querySelector('.vinyl'); if (!btn) return;
-  const hint = document.querySelector('.vinyl-hint');
   const tracks = Object.fromEntries([...document.querySelectorAll('audio[data-track]')].map((a) => [a.dataset.track, a]));
   const LEVEL = { ambient: 0.45, 'site-railway': 0.6, 'site-saltery': 0.6 };
   let on = true, blocked = false, zone = null, raf = 0;
@@ -934,7 +939,6 @@ document.querySelectorAll('.step').forEach((step) => {
   const playing = () => Object.values(tracks).some((a) => !a.paused);
   const refresh = () => {
     btn.classList.toggle('is-spinning', on && playing());
-    if (hint) hint.hidden = !(on && blocked);
   };
   const tick = () => {
     raf = 0; let moving = false;
